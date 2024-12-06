@@ -18,7 +18,7 @@ export const useScene = () => {
       const camera = new BABYLON.FreeCamera(
         "camera1",
         new BABYLON.Vector3(0, 5, -10),
-        scene
+        scene,
       );
 
       camera.setTarget(BABYLON.Vector3.Zero());
@@ -28,7 +28,7 @@ export const useScene = () => {
       new BABYLON.HemisphericLight(
         "light1",
         new BABYLON.Vector3(0, 1, 0),
-        scene
+        scene,
       );
 
       const sphere = BABYLON.Mesh.CreateSphere(
@@ -37,7 +37,7 @@ export const useScene = () => {
         2,
         scene,
         false,
-        BABYLON.Mesh.FRONTSIDE
+        BABYLON.Mesh.FRONTSIDE,
       );
 
       sphere.position.y = 1;
