@@ -1,5 +1,6 @@
-import React, { JSX } from "react";
+import React from "react";
+import { Scene } from "./components/Scene/Scene";
 
-export const App = (): JSX.Element => {
-  return <h1>Hello, world!</h1>;
+export const App = () => {
+  return <Scene />;
 };
