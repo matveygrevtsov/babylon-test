@@ -15,9 +15,12 @@ export const Container = styled.div`
   }
 `;
 
-export const OpenNavigationButton = styled.button`
+export const OpenNavigationButton = styled.div`
   position: absolute;
   left: 16px;
   top: 16px;
   z-index: 1;
+  width: 48px;
+  height: 48px;
+  cursor: pointer;
 `;

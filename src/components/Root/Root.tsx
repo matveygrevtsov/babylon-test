@@ -2,6 +2,7 @@ import React, { FC, useMemo, useState } from "react";
 import { Container, OpenNavigationButton } from "./styles";
 import { Example1 } from "../Example1/Example1";
 import { Navigation } from "./Navigation/Navigation";
+import { BarsIcon } from "../../icons/BarsIcon";
 
 interface IState {
   index: number;
@@ -34,22 +35,29 @@ export const Root = () => {
     }));
   };
 
-  return (
-    <Container>
-      {state.isNavigationOpened ? (
-        <Navigation
-          activeItemIndex={state.index}
-          onItemClick={handleNavigationItemClick}
-          onClose={handleNavigationToggle}
-          itemsNumber={EXAMPLES.length}
-        />
-      ) : (
-        <OpenNavigationButton onClick={handleNavigationToggle}>
-          Навигация
-        </OpenNavigationButton>
-      )}
+  switch (EXAMPLES.length) {
+    case 0:
+      return null;
+    case 1:
+      return <Example />;
+    default:
+      return (
+        <Container>
+          {state.isNavigationOpened ? (
+            <Navigation
+              activeItemIndex={state.index}
+              onItemClick={handleNavigationItemClick}
+              onClose={handleNavigationToggle}
+              itemsNumber={EXAMPLES.length}
+            />
+          ) : (
+            <OpenNavigationButton onClick={handleNavigationToggle}>
+              <BarsIcon />
+            </OpenNavigationButton>
+          )}
 
-      <Example />
-    </Container>
-  );
+          <Example />
+        </Container>
+      );
+  }
 };
