@@ -1,5 +1,7 @@
+const webpack = require("webpack");
 const path = require("path");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
+require("dotenv").config(); // Загружаем переменные окружения из файла .env
 
 const OUTPUT_FOLDER_NAME = path.resolve(__dirname, "dist"); // Папка, куда всё заливаться сбилженный проект.
 
@@ -8,7 +10,7 @@ module.exports = {
   entry: "./src/index.tsx",
   output: {
     path: OUTPUT_FOLDER_NAME,
-    filename: "babylon-test/bundle.js",
+    filename: "bundle.js",
     clean: true, // Очищает выходную папку перед сборкой
   }, // выходной файл
   resolve: {
@@ -24,8 +26,12 @@ module.exports = {
     ],
   },
   plugins: [
+    new webpack.DefinePlugin({
+      BASE_URL: JSON.stringify(process.env.BASE_URL),
+    }),
     new HtmlWebpackPlugin({
       template: "./public/index.html",
+      baseUrl: process.env.BASE_URL,
     }),
   ],
   devServer: {
