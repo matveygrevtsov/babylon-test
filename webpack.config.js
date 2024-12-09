@@ -8,7 +8,8 @@ module.exports = {
   entry: "./src/index.tsx",
   output: {
     path: OUTPUT_FOLDER_NAME,
-    filename: "bundle.js",
+    filename: "babylon-test/bundle.js",
+    clean: true, // Очищает выходную папку перед сборкой
   }, // выходной файл
   resolve: {
     extensions: [".tsx", ".ts", ".js", "jsx"],
