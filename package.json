@@ -7,7 +7,7 @@
     "build": "npx webpack --mode production",
     "start": "npx webpack server",
     "lint": "npx eslint ./src --fix",
-    "predeploy": "npm run build",
+    "predeploy": "cross-env BASE_URL=https://matveygrevtsov.github.io/babylon-test/ npm run build",
     "deploy": "gh-pages -d dist"
   },
   "author": "",
@@ -17,7 +17,7 @@
     "@eslint/js": "9.16.0",
     "@types/react": "19.0.1",
     "@types/react-dom": "19.0.1",
-    "dotenv": "16.4.7",
+    "cross-env": "7.0.3",
     "eslint": "9.16.0",
     "eslint-config-prettier": "9.1.0",
     "eslint-plugin-prettier": "5.2.1",
