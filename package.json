@@ -7,7 +7,7 @@
     "build": "npx webpack --mode production",
     "start": "npx webpack server",
     "predeploy": "npm run build",
-    "deploy": "gh-pages -d build"
+    "deploy": "gh-pages -d dist"
   },
   "author": "",
   "license": "ISC",
