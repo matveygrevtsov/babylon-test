@@ -39,7 +39,11 @@ export const Root = () => {
     case 0:
       return null;
     case 1:
-      return <Example />;
+      return (
+        <Container>
+          <Example />
+        </Container>
+      );
     default:
       return (
         <Container>
