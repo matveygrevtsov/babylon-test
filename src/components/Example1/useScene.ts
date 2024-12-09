@@ -20,7 +20,7 @@ export const useScene = () => {
       const camera = new BABYLON.FreeCamera(
         "camera1",
         new BABYLON.Vector3(0, 5, -10),
-        scene
+        scene,
       );
       // Targets the camera to scene origin
       camera.setTarget(BABYLON.Vector3.Zero());
@@ -30,23 +30,25 @@ export const useScene = () => {
       const light = new BABYLON.HemisphericLight(
         "light",
         new BABYLON.Vector3(0, 1, 0),
-        scene
+        scene,
       );
       // Dim the light a small amount 0 - 1
       light.intensity = 0.7;
       // Built-in 'sphere' shape.
-      const sphere = BABYLON.MeshBuilder.CreateSphere(
-        "sphere",
-        { diameter: 2, segments: 32 },
-        scene
-      );
-      // Move sphere upward 1/2 its height
-      sphere.position.y = 1;
+      BABYLON.SceneLoader.ImportMeshAsync(
+        "semi_house",
+        "https://assets.babylonjs.com/meshes/",
+        "both_houses_scene.babylon",
+        scene,
+      ).then((result) => {
+        const [root] = result.meshes;
+        root.rotate(new BABYLON.Vector3(0, 1, 0), 45);
+      });
       // Пол (земля).
       BABYLON.MeshBuilder.CreateGround(
         "ground",
         { width: 6, height: 6 },
-        scene
+        scene,
       );
       return scene;
     })();
