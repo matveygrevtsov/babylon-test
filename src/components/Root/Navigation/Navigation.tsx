@@ -1,5 +1,6 @@
 import React, { FC, useMemo } from "react";
 import { Body, CloseButton, Header, Item, Root } from "./styles";
+import { CloseIcon } from "../../../icons/CloseIcon";
 
 interface IProps {
   activeItemIndex: number;
@@ -22,7 +23,9 @@ export const Navigation: FC<IProps> = ({
   return (
     <Root>
       <Header>
-        <CloseButton onClick={onClose}>Закрыть</CloseButton>
+        <CloseButton onClick={onClose}>
+          <CloseIcon />
+        </CloseButton>
       </Header>
 
       <Body>
@@ -31,7 +34,7 @@ export const Navigation: FC<IProps> = ({
             onClick={() => onItemClick(item)}
             isActive={item === activeItemIndex}
             key={item}
-          >{`Пример №${item}`}</Item>
+          >{`Пример №${item + 1}`}</Item>
         ))}
       </Body>
     </Root>

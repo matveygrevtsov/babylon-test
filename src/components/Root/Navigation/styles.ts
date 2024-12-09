@@ -12,20 +12,19 @@ export const Root = styled.div`
   display: flex;
   flex-direction: column;
   z-index: 1;
-  background-color: gray;
+  background-color: #d3d3d3;
 `;
 
 export const Header = styled.div`
   flex-shrink: 0;
-  height: ${HEADER_HEIGHT_PX}px;
   position: relative;
+  padding: 16px;
 `;
 
-export const CloseButton = styled.button`
-  position: absolute;
-  left: 16px;
-  top: 50%;
-  transform: translate(0, -50%);
+export const CloseButton = styled.div`
+  width: ${HEADER_HEIGHT_PX}px;
+  height: ${HEADER_HEIGHT_PX}px;
+  cursor: pointer;
 `;
 
 export const Body = styled.div`
@@ -37,6 +36,6 @@ export const Item = styled.div<{
   isActive: boolean;
 }>`
   padding: 16px;
-
-  background-color: ${({ isActive }) => (isActive ? "blue" : "gray")};
+  background-color: ${({ isActive }) => (isActive ? "#89CFF0" : "#F0F8FF")};
+  cursor: pointer;
 `;
