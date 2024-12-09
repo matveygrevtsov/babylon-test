@@ -17,7 +17,7 @@ export const Navigation: FC<IProps> = ({
 }) => {
   const items = useMemo(
     () => Array.from(Array(itemsNumber).keys()),
-    [itemsNumber]
+    [itemsNumber],
   );
 
   return (
