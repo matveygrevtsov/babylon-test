@@ -4,10 +4,10 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "build": "npx webpack --mode production",
+    "build": "cross-env BASE_URL=/ npx webpack --mode production",
     "start": "npx webpack server",
     "lint": "npx eslint ./src --fix",
-    "predeploy": "cross-env BASE_URL=https://matveygrevtsov.github.io/babylon-test/ npm run build",
+    "predeploy": "cross-env BASE_URL=https://matveygrevtsov.github.io/babylon-test/ npx webpack --mode production",
     "deploy": "gh-pages -d dist"
   },
   "author": "",
