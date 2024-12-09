@@ -14,36 +14,40 @@ export const useScene = () => {
     });
 
     const scene = (() => {
+      // Creates a basic Babylon Scene object
       const scene = new BABYLON.Scene(engine);
+      // Creates and positions a free camera
       const camera = new BABYLON.FreeCamera(
         "camera1",
         new BABYLON.Vector3(0, 5, -10),
-        scene,
+        scene
       );
-
+      // Targets the camera to scene origin
       camera.setTarget(BABYLON.Vector3.Zero());
-
-      camera.attachControl(canvas, false);
-
-      new BABYLON.HemisphericLight(
-        "light1",
+      // Attaches the camera to the canvas
+      camera.attachControl(canvas, true);
+      // Creates a light, aiming 0,1,0
+      const light = new BABYLON.HemisphericLight(
+        "light",
         new BABYLON.Vector3(0, 1, 0),
-        scene,
+        scene
       );
-
-      const sphere = BABYLON.Mesh.CreateSphere(
-        "sphere1",
-        16,
-        2,
-        scene,
-        false,
-        BABYLON.Mesh.FRONTSIDE,
+      // Dim the light a small amount 0 - 1
+      light.intensity = 0.7;
+      // Built-in 'sphere' shape.
+      const sphere = BABYLON.MeshBuilder.CreateSphere(
+        "sphere",
+        { diameter: 2, segments: 32 },
+        scene
       );
-
+      // Move sphere upward 1/2 its height
       sphere.position.y = 1;
-
-      BABYLON.Mesh.CreateGround("ground1", 6, 6, 2, scene, false);
-      // Return the created scene
+      // Пол (земля).
+      BABYLON.MeshBuilder.CreateGround(
+        "ground",
+        { width: 6, height: 6 },
+        scene
+      );
       return scene;
     })();
 

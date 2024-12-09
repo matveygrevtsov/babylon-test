@@ -1,6 +1,6 @@
 import React from "react";
-import { Scene } from "./components/Scene/Scene";
+import { Root } from "./components/Root/Root";
 
 export const App = () => {
-  return <Scene />;
+  return <Root />;
 };
