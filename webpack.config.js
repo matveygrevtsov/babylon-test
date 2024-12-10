@@ -1,5 +1,6 @@
 const path = require("path");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
+const CopyWebpackPlugin = require("copy-webpack-plugin");
 
 const OUTPUT_FOLDER_NAME = path.resolve(__dirname, "dist"); // Папка, куда всё заливаться сбилженный проект.
 
@@ -27,6 +28,9 @@ module.exports = {
     new HtmlWebpackPlugin({
       template: "./public/index.html",
       baseUrl: process.env.BASE_URL,
+    }),
+    new CopyWebpackPlugin({
+      patterns: [{ from: "./public/assets", to: "assets" }],
     }),
   ],
   devServer: {
