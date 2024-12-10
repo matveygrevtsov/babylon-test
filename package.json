@@ -35,6 +35,8 @@
     "webpack-dev-server": "5.1.0"
   },
   "dependencies": {
+    "@babylonjs/inspector": "7.39.1",
+    "@babylonjs/loaders": "7.39.1",
     "babylonjs": "7.38.0",
     "react": "19.0.0",
     "react-dom": "19.0.0",
