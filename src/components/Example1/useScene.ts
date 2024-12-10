@@ -1,5 +1,13 @@
 import { useEffect, useRef } from "react";
-import * as BABYLON from "babylonjs";
+import {
+  Engine,
+  Scene,
+  Vector3,
+  HemisphericLight,
+  MeshBuilder,
+  FreeCamera,
+  SceneLoader,
+} from "@babylonjs/core";
 
 export const useScene = () => {
   const ref = useRef<HTMLCanvasElement>(null);
@@ -8,48 +16,44 @@ export const useScene = () => {
     const canvas = ref.current;
     if (!canvas) return;
 
-    const engine = new BABYLON.Engine(canvas, true, {
+    const engine = new Engine(canvas, true, {
       preserveDrawingBuffer: true,
       stencil: true,
     });
 
     const scene = (() => {
       // Creates a basic Babylon Scene object
-      const scene = new BABYLON.Scene(engine);
+      const scene = new Scene(engine);
       // Creates and positions a free camera
-      const camera = new BABYLON.FreeCamera(
-        "camera1",
-        new BABYLON.Vector3(0, 5, -10),
-        scene,
-      );
+      const camera = new FreeCamera("camera1", new Vector3(0, 5, -10), scene);
       // Targets the camera to scene origin
-      camera.setTarget(BABYLON.Vector3.Zero());
+      camera.setTarget(Vector3.Zero());
       // Attaches the camera to the canvas
       camera.attachControl(canvas, true);
       // Creates a light, aiming 0,1,0
-      const light = new BABYLON.HemisphericLight(
-        "light",
-        new BABYLON.Vector3(0, 1, 0),
-        scene,
-      );
+      const light = new HemisphericLight("light", new Vector3(0, 1, 0), scene);
       // Dim the light a small amount 0 - 1
       light.intensity = 0.7;
       // Built-in 'sphere' shape.
-      BABYLON.SceneLoader.ImportMeshAsync(
+      SceneLoader.ImportMeshAsync(
         "semi_house",
         "https://assets.babylonjs.com/meshes/",
         "both_houses_scene.babylon",
-        scene,
+        scene
       ).then((result) => {
         const [root] = result.meshes;
-        root.rotate(new BABYLON.Vector3(0, 1, 0), 45);
+        root.rotate(new Vector3(0, 1, 0), 45);
       });
-      // Пол (земля).
-      BABYLON.MeshBuilder.CreateGround(
-        "ground",
-        { width: 6, height: 6 },
-        scene,
+
+      SceneLoader.ImportMeshAsync(
+        null,
+        "assets/",
+        "Adventurer.gltf",
+        scene
       );
+
+      // Пол (земля).
+      MeshBuilder.CreateGround("ground", { width: 6, height: 6 }, scene);
       return scene;
     })();
 

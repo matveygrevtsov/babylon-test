@@ -3,6 +3,9 @@ import { Container, OpenNavigationButton } from "./styles";
 import { Example1 } from "../Example1/Example1";
 import { Navigation } from "./Navigation/Navigation";
 import { BarsIcon } from "../../icons/BarsIcon";
+import "@babylonjs/core/Debug/debugLayer";
+import "@babylonjs/inspector";
+import "@babylonjs/loaders";
 
 interface IState {
   index: number;
