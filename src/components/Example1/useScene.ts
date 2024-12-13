@@ -6,8 +6,10 @@ import {
   HemisphericLight,
   MeshBuilder,
   FreeCamera,
-  SceneLoader,
+  StandardMaterial,
+  Color3,
 } from "@babylonjs/core";
+import { Character } from "./Character/Character";
 
 export const useScene = () => {
   const ref = useRef<HTMLCanvasElement>(null);
@@ -35,25 +37,21 @@ export const useScene = () => {
       // Dim the light a small amount 0 - 1
       light.intensity = 0.7;
       // Built-in 'sphere' shape.
-      SceneLoader.ImportMeshAsync(
-        "semi_house",
-        "https://assets.babylonjs.com/meshes/",
-        "both_houses_scene.babylon",
-        scene
-      ).then((result) => {
-        const [root] = result.meshes;
-        root.rotate(new Vector3(0, 1, 0), 45);
+
+      const character = new Character({
+        scene,
       });
 
-      SceneLoader.ImportMeshAsync(
-        null,
-        "assets/",
-        "Adventurer.gltf",
+      // Пол (земля).
+      const ground = MeshBuilder.CreateGround(
+        "ground",
+        { width: 6, height: 6 },
         scene
       );
+      const groundMaterial = new StandardMaterial("groundMaterial", scene);
+      groundMaterial.diffuseColor = Color3.FromHexString("#97ae3b");
+      ground.material = groundMaterial;
 
-      // Пол (земля).
-      MeshBuilder.CreateGround("ground", { width: 6, height: 6 }, scene);
       return scene;
     })();
 
