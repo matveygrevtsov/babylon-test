@@ -1,4 +1,4 @@
-import { IMovementVector, TPressedKeyBoardKeysRecord } from "./types";
+import { TPressedKeyBoardKeysRecord } from "./types";
 
 export const ANIMAIONS = {
   Idle: "Idle",
@@ -42,8 +42,3 @@ export const INITIAL_PRESSED_KEYBOARD_KEYS_RECORD = (() => {
   });
   return result;
 })();
-
-export const INITIAL_MOVEMENT_VECTOR: IMovementVector = {
-  forward: 0,
-  right: 0,
-};

@@ -1,4 +1,5 @@
 import {
+  ArcRotateCamera,
   ISceneLoaderAsyncResult,
   KeyboardInfo,
   Scene,
@@ -6,32 +7,27 @@ import {
   Vector3,
 } from "@babylonjs/core";
 import { TGetObjectValues } from "../../../types";
-import {
-  ANIMAIONS,
-  INITIAL_MOVEMENT_VECTOR,
-  INITIAL_PRESSED_KEYBOARD_KEYS_RECORD,
-} from "./constants";
-import { KeyboardEventTypes } from "babylonjs";
-import {
-  IMovementVector,
-  TKeyboardKeys,
-  TPressedKeyBoardKeysRecord,
-} from "./types";
+import { ANIMAIONS, INITIAL_PRESSED_KEYBOARD_KEYS_RECORD } from "./constants";
+import { KeyboardEventTypes, Vector2 } from "babylonjs";
+import { TKeyboardKeys, TPressedKeyBoardKeysRecord } from "./types";
 
 interface IProps {
   scene: Scene;
+  camera: ArcRotateCamera;
 }
+
+// Ось Z смотрит против нас, ось X - вправо, а ось Y - вверх.
 
 export class Character {
   private readonly scene: Scene;
+  private readonly camera: ArcRotateCamera;
   private readonly pressedKeyBoardKeysRecord: TPressedKeyBoardKeysRecord;
-  private readonly movementVector: IMovementVector;
   private sceneLoaderAsyncResult?: ISceneLoaderAsyncResult;
 
-  constructor({ scene }: IProps) {
+  constructor({ scene, camera }: IProps) {
     this.scene = scene;
+    this.camera = camera;
     this.pressedKeyBoardKeysRecord = INITIAL_PRESSED_KEYBOARD_KEYS_RECORD;
-    this.movementVector = INITIAL_MOVEMENT_VECTOR;
 
     this.loadToScene().then(() => {
       this.animate("Idle");
@@ -62,14 +58,11 @@ export class Character {
 
   private addListeners() {
     // Данный обработчик срабатывает при нажатии на любую клавишу клавиатуры.
-    this.scene.onKeyboardObservable.add((event) => {
-      this.handleKeyboardEvent(event);
-    });
-
+    this.scene.onKeyboardObservable.add((event) =>
+      this.handleKeyboardEvent(event)
+    );
     // Данный обработчик срабатывает на каждый кадр.
-    this.scene.onBeforeRenderObservable.add(() => {
-      this.handleSceneTick();
-    });
+    this.scene.onBeforeRenderObservable.add(() => this.handleSceneTick());
   }
 
   private handleKeyboardEvent(keyboardInfo: KeyboardInfo) {
@@ -79,57 +72,40 @@ export class Character {
     const { sceneLoaderAsyncResult, pressedKeyBoardKeysRecord } = this;
     if (!sceneLoaderAsyncResult) return;
     pressedKeyBoardKeysRecord[key] = isKeyDown;
-    const { KeyW, KeyS, KeyD, KeyA } = pressedKeyBoardKeysRecord;
-    this.movementVector.forward = Number(KeyW) - Number(KeyS);
-    this.movementVector.right = Number(KeyD) - Number(KeyA);
-
-    if (!this.movementVector.forward && !this.movementVector.right) {
-      this.animate("Idle");
-    } else {
+    if (
+      pressedKeyBoardKeysRecord.KeyW ||
+      pressedKeyBoardKeysRecord.KeyS ||
+      pressedKeyBoardKeysRecord.KeyA ||
+      pressedKeyBoardKeysRecord.KeyD
+    ) {
       this.animate("Run");
+    } else {
+      this.animate("Idle");
     }
   }
 
   private handleSceneTick() {
-    const { sceneLoaderAsyncResult } = this;
+    const { sceneLoaderAsyncResult, camera, pressedKeyBoardKeysRecord } = this;
     if (!sceneLoaderAsyncResult) return;
     const [root] = sceneLoaderAsyncResult.meshes;
-    const { forward, right } = this.movementVector;
+
+    const normalizedMovementVector = (() => {
+      const targetVector2 = new Vector2(root.position.z, root.position.x);
+      const cameraVector2 = new Vector2(camera.position.z, camera.position.x);
+      const movementVector = targetVector2.subtract(cameraVector2).normalize();
+      console.log(movementVector);
+      return new Vector3(movementVector.y, 0, movementVector.x);
+    })();
+
     const delta = ((this.scene.deltaTime ?? 0) / 1000) * 4;
 
-    root.position.z += delta * forward;
-    root.position.x += delta * right;
+    const movementVector = normalizedMovementVector.scale(delta);
 
-    if (forward === 1 && right === 0) {
-      root.rotation = new Vector3(0, Math.PI, 0);
-    }
-
-    if (forward === 1 && right === -1) {
-      root.rotation = new Vector3(0, 0.75 * Math.PI, 0);
-    }
-
-    if (forward === 0 && right === -1) {
-      root.rotation = new Vector3(0, 0.5 * Math.PI, 0);
-    }
-
-    if (forward === -1 && right === -1) {
-      root.rotation = new Vector3(0, 0.25 * Math.PI, 0);
-    }
-
-    if (forward === -1 && right === 0) {
-      root.rotation = new Vector3(0, 0, 0);
-    }
-
-    if (forward === -1 && right === 1) {
-      root.rotation = new Vector3(0, 1.75 * Math.PI, 0);
-    }
-
-    if (forward === 0 && right === 1) {
-      root.rotation = new Vector3(0, 1.5 * Math.PI, 0);
-    }
-
-    if (forward === 1 && right === 1) {
-      root.rotation = new Vector3(0, 1.25 * Math.PI, 0);
+    if (pressedKeyBoardKeysRecord.KeyW) {
+      root.position.addInPlace(movementVector);
+      root.lookAt(root.position.subtract(normalizedMovementVector));
+      camera.position.addInPlace(movementVector);
+      camera.setTarget(root.position);
     }
   }
 }
