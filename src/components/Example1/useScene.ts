@@ -45,7 +45,7 @@ export const useScene = () => {
       // Пол (земля).
       const ground = MeshBuilder.CreateGround(
         "ground",
-        { width: 60, height: 60 },
+        { width: 6, height: 6 },
         scene
       );
       const groundMaterial = new StandardMaterial("groundMaterial", scene);

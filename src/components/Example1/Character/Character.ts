@@ -1,13 +1,22 @@
 import {
   ISceneLoaderAsyncResult,
+  KeyboardInfo,
   Scene,
   SceneLoader,
   Vector3,
 } from "@babylonjs/core";
 import { TGetObjectValues } from "../../../types";
-import { ANIMAIONS, INITIAL_PRESSED_KEYBOARD_KEYS_RECORD } from "./constants";
+import {
+  ANIMAIONS,
+  INITIAL_MOVEMENT_VECTOR,
+  INITIAL_PRESSED_KEYBOARD_KEYS_RECORD,
+} from "./constants";
 import { KeyboardEventTypes } from "babylonjs";
-import { TKeyboardKeys, TPressedKeyBoardKeysRecord } from "./types";
+import {
+  IMovementVector,
+  TKeyboardKeys,
+  TPressedKeyBoardKeysRecord,
+} from "./types";
 
 interface IProps {
   scene: Scene;
@@ -16,15 +25,17 @@ interface IProps {
 export class Character {
   private readonly scene: Scene;
   private readonly pressedKeyBoardKeysRecord: TPressedKeyBoardKeysRecord;
+  private readonly movementVector: IMovementVector;
   private sceneLoaderAsyncResult?: ISceneLoaderAsyncResult;
 
   constructor({ scene }: IProps) {
     this.scene = scene;
     this.pressedKeyBoardKeysRecord = INITIAL_PRESSED_KEYBOARD_KEYS_RECORD;
+    this.movementVector = INITIAL_MOVEMENT_VECTOR;
 
     this.loadToScene().then(() => {
       this.animate("Idle");
-      this.addKeyboardListener();
+      this.addListeners();
     });
   }
 
@@ -36,8 +47,6 @@ export class Character {
       this.scene
     ).then((sceneLoaderAsyncResult) => {
       this.sceneLoaderAsyncResult = sceneLoaderAsyncResult;
-      const [root] = sceneLoaderAsyncResult.meshes;
-      root.rotation = new Vector3(0, Math.PI / 2, 0);
     });
   }
 
@@ -51,38 +60,45 @@ export class Character {
     });
   }
 
-  private addKeyboardListener() {
+  private addListeners() {
     // Данный обработчик срабатывает при нажатии на любую клавишу клавиатуры.
-    this.scene.onKeyboardObservable.add((keyboardInfo) => {
-      const key = keyboardInfo.event.code as TKeyboardKeys;
-      if (typeof this.pressedKeyBoardKeysRecord[key] !== "boolean") return;
-      this.handleKeyPress(
-        key,
-        keyboardInfo.type === KeyboardEventTypes.KEYDOWN
-      );
+    this.scene.onKeyboardObservable.add((event) => {
+      this.handleKeyboardEvent(event);
     });
 
     // Данный обработчик срабатывает на каждый кадр.
     this.scene.onBeforeRenderObservable.add(() => {
-      console.log(this.scene.deltaTime / 1000);
+      this.handleSceneTick();
     });
   }
 
-  private handleKeyPress(key: TKeyboardKeys, isPressed: boolean) {
+  private handleKeyboardEvent(keyboardInfo: KeyboardInfo) {
+    const key = keyboardInfo.event.code as TKeyboardKeys;
+    const isKeyDown = keyboardInfo.type === KeyboardEventTypes.KEYDOWN;
+    if (typeof this.pressedKeyBoardKeysRecord[key] !== "boolean") return;
     const { sceneLoaderAsyncResult, pressedKeyBoardKeysRecord } = this;
     if (!sceneLoaderAsyncResult) return;
-    const [root] = sceneLoaderAsyncResult.meshes;
-    pressedKeyBoardKeysRecord[key] = isPressed;
+    pressedKeyBoardKeysRecord[key] = isKeyDown;
     const { KeyW, KeyS, KeyD, KeyA } = pressedKeyBoardKeysRecord;
-    const forward = Number(KeyW) - Number(KeyS);
-    const right = Number(KeyD) - Number(KeyA);
+    this.movementVector.forward = Number(KeyW) - Number(KeyS);
+    this.movementVector.right = Number(KeyD) - Number(KeyA);
 
-    if (!forward && !right) {
+    if (!this.movementVector.forward && !this.movementVector.right) {
       this.animate("Idle");
-      return;
+    } else {
+      this.animate("Run");
     }
+  }
 
-    this.animate("Run");
+  private handleSceneTick() {
+    const { sceneLoaderAsyncResult } = this;
+    if (!sceneLoaderAsyncResult) return;
+    const [root] = sceneLoaderAsyncResult.meshes;
+    const { forward, right } = this.movementVector;
+    const delta = ((this.scene.deltaTime ?? 0) / 1000) * 4;
+
+    root.position.z += delta * forward;
+    root.position.x += delta * right;
 
     if (forward === 1 && right === 0) {
       root.rotation = new Vector3(0, Math.PI, 0);
