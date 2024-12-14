@@ -9,7 +9,7 @@ import {
 } from "@babylonjs/core";
 import { TGetObjectValues } from "../../../types";
 import { ANIMAIONS, KEYBOARD_KEYS } from "./constants";
-import { KeyboardEventTypes, Vector2 } from "babylonjs";
+import { KeyboardEventTypes } from "babylonjs";
 import { TKeyboardKeys } from "./types";
 
 interface IProps {
@@ -25,8 +25,7 @@ export class Character {
   private readonly pressedKeyBoardKeys: Set<TKeyboardKeys>;
   private mesh?: AbstractMesh;
   private animations?: AnimationGroup[];
-  private cameraDirectionVector?: Vector2;
-  private movementDirectionVector?: Vector2;
+  private movementDirectionVector?: Vector3;
 
   constructor({ scene, camera }: IProps) {
     this.scene = scene;
@@ -44,7 +43,7 @@ export class Character {
       null,
       "assets/",
       "Adventurer.gltf",
-      this.scene,
+      this.scene
     ).then(({ meshes, animationGroups }) => {
       this.mesh = meshes[0];
       this.animations = animationGroups;
@@ -83,6 +82,18 @@ export class Character {
       pressedKeyBoardKeys.delete(key);
     }
 
+    this.refreshAnimation();
+  }
+
+  private handleSceneTick() {
+    this.refreshMovementDirectionVector();
+    this.refreshRotation();
+    this.refreshPosition();
+  }
+
+  private refreshAnimation() {
+    const { pressedKeyBoardKeys } = this;
+
     if (
       pressedKeyBoardKeys.has("KeyW") ||
       pressedKeyBoardKeys.has("KeyS") ||
@@ -95,105 +106,72 @@ export class Character {
     }
   }
 
-  private handleSceneTick() {
-    this.refreshCameraDirectionVector();
-    this.refreshMovementDirectionVector();
-    this.refreshRotation();
-
-    const { mesh, movementDirectionVector, scene, camera } = this;
-    if (!mesh || !movementDirectionVector || !camera) return;
-
-    const delta = ((scene.deltaTime ?? 0) / 1000) * 4;
-
-    const movementDirectionVector3 = new Vector3(
-      movementDirectionVector.x,
-      0,
-      movementDirectionVector.y,
-    );
-
-    const positionIncrease = movementDirectionVector3.scale(delta);
-
-    mesh.position.addInPlace(positionIncrease);
-    camera.position.addInPlace(positionIncrease);
-    camera.setTarget(mesh.position);
-  }
-
-  private refreshRotation() {
-    const { pressedKeyBoardKeys, movementDirectionVector, mesh } = this;
-
-    if (!mesh) return;
-
-    if (!movementDirectionVector) {
-      mesh.lookAt(mesh.position.subtract(new Vector3(0, 0, 1)));
-      return;
-    }
-
-    if (
-      (!pressedKeyBoardKeys.has("KeyW") &&
-        !pressedKeyBoardKeys.has("KeyS") &&
-        !pressedKeyBoardKeys.has("KeyD") &&
-        !pressedKeyBoardKeys.has("KeyA")) ||
-      (movementDirectionVector.x === 0 && movementDirectionVector.y === 0)
-    ) {
-      return;
-    }
-
-    mesh.lookAt(
-      mesh.position.subtract(
-        new Vector3(movementDirectionVector.x, 0, movementDirectionVector.y),
-      ),
-    );
-  }
-
-  private refreshCameraDirectionVector() {
-    const { camera, mesh } = this;
-    if (!mesh) return;
-    const cameraVector2 = new Vector2(camera.position.x, camera.position.z);
-    const targetVector2 = new Vector2(mesh.position.x, mesh.position.z);
-
-    const cameraDirectionVector = targetVector2.subtract(cameraVector2);
-
-    if (this.cameraDirectionVector) {
-      this.cameraDirectionVector.copyFrom(cameraDirectionVector);
-    } else {
-      this.cameraDirectionVector = cameraDirectionVector;
-    }
-  }
-
   private refreshMovementDirectionVector() {
-    const { cameraDirectionVector, pressedKeyBoardKeys } = this;
-    if (!cameraDirectionVector) return;
+    const { camera, pressedKeyBoardKeys } = this;
 
     if (this.movementDirectionVector) {
-      this.movementDirectionVector.copyFrom(Vector2.Zero());
+      this.movementDirectionVector.copyFrom(Vector3.Zero());
     } else {
-      this.movementDirectionVector = Vector2.Zero();
+      this.movementDirectionVector = Vector3.Zero();
     }
+
+    const cameraDirection = camera.getForwardRay().direction;
+    cameraDirection.y = 0;
 
     // Движение на север.
     if (pressedKeyBoardKeys.has("KeyW")) {
-      this.movementDirectionVector.addInPlace(cameraDirectionVector);
+      this.movementDirectionVector.addInPlace(cameraDirection);
     }
 
     // Движение на юг.
     if (pressedKeyBoardKeys.has("KeyS")) {
-      this.movementDirectionVector.addInPlace(cameraDirectionVector.scale(-1));
+      this.movementDirectionVector.addInPlace(cameraDirection.scale(-1));
     }
 
     // Движение на восток.
     if (pressedKeyBoardKeys.has("KeyD")) {
       this.movementDirectionVector.addInPlace(
-        new Vector2(cameraDirectionVector.y, -cameraDirectionVector.x),
+        new Vector3(cameraDirection.z, 0, -cameraDirection.x)
       );
     }
 
     // Движение на запад.
     if (pressedKeyBoardKeys.has("KeyA")) {
       this.movementDirectionVector.addInPlace(
-        new Vector2(-cameraDirectionVector.y, cameraDirectionVector.x),
+        new Vector3(-cameraDirection.z, 0, cameraDirection.x)
       );
     }
 
     this.movementDirectionVector.normalize();
+  }
+
+  private refreshRotation() {
+    const { pressedKeyBoardKeys, movementDirectionVector, mesh } = this;
+    if (!mesh || !movementDirectionVector) return;
+
+    if (
+      (!pressedKeyBoardKeys.has("KeyW") &&
+        !pressedKeyBoardKeys.has("KeyS") &&
+        !pressedKeyBoardKeys.has("KeyD") &&
+        !pressedKeyBoardKeys.has("KeyA")) ||
+      (movementDirectionVector.x === 0 && movementDirectionVector.z === 0)
+    ) {
+      return;
+    }
+
+    mesh.lookAt(mesh.position.subtract(movementDirectionVector));
+  }
+
+  private refreshPosition() {
+    const { mesh, movementDirectionVector, scene, camera } = this;
+    if (!mesh || !movementDirectionVector || !camera) return;
+
+    const delta = ((scene.deltaTime ?? 0) / 1000) * 4;
+
+    const positionIncrease = movementDirectionVector.scale(delta);
+
+    mesh.position.addInPlace(positionIncrease);
+    camera.position.addInPlace(positionIncrease);
+    camera.setTarget(mesh.position);
   }
 }
