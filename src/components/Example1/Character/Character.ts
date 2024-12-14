@@ -96,6 +96,7 @@ export class Character {
   }
 
   private handleSceneTick() {
+    this.refreshRotation();
     this.refreshCameraDirectionVector();
     this.refreshMovementDirectionVector();
 
@@ -115,8 +116,6 @@ export class Character {
     mesh.position.addInPlace(positionIncrease);
     camera.position.addInPlace(positionIncrease);
     camera.setTarget(mesh.position);
-
-    mesh.lookAt(mesh.position.subtract(movementDirectionVector3));
   }
 
   private refreshCameraDirectionVector() {
@@ -135,7 +134,6 @@ export class Character {
   }
 
   private refreshMovementDirectionVector() {
-    this.refreshCameraDirectionVector();
     const { cameraDirectionVector, pressedKeyBoardKeys } = this;
     if (!cameraDirectionVector) return;
 
@@ -170,5 +168,32 @@ export class Character {
     }
 
     this.movementDirectionVector.normalize();
+  }
+
+  private refreshRotation() {
+    const { pressedKeyBoardKeys, movementDirectionVector, mesh } = this;
+
+    if (!mesh) return;
+
+    if (!movementDirectionVector) {
+      mesh.lookAt(mesh.position.subtract(new Vector3(0, 0, 1)));
+      return;
+    }
+
+    if (
+      (!pressedKeyBoardKeys.has("KeyW") &&
+        !pressedKeyBoardKeys.has("KeyS") &&
+        !pressedKeyBoardKeys.has("KeyD") &&
+        !pressedKeyBoardKeys.has("KeyA")) ||
+      (movementDirectionVector.x === 0 && movementDirectionVector.y === 0)
+    ) {
+      return;
+    }
+
+    mesh.lookAt(
+      mesh.position.subtract(
+        new Vector3(movementDirectionVector.x, 0, movementDirectionVector.y)
+      )
+    );
   }
 }
