@@ -1,5 +1,3 @@
-import { TPressedKeyBoardKeysRecord } from "./types";
-
 export const ANIMAIONS = {
   Idle: "Idle",
   Death: "Death",
@@ -32,13 +30,4 @@ export const KEYBOARD_KEYS = {
   KeyA: "KeyA",
   KeyS: "KeyS",
   KeyD: "KeyD",
-  Space: "Space",
 } as const;
-
-export const INITIAL_PRESSED_KEYBOARD_KEYS_RECORD = (() => {
-  const result = {} as TPressedKeyBoardKeysRecord;
-  Object.values(KEYBOARD_KEYS).forEach((key) => {
-    result[key] = false;
-  });
-  return result;
-})();
