@@ -44,7 +44,7 @@ export class Character {
       null,
       "assets/",
       "Adventurer.gltf",
-      this.scene
+      this.scene,
     ).then(({ meshes, animationGroups }) => {
       this.mesh = meshes[0];
       this.animations = animationGroups;
@@ -96,9 +96,9 @@ export class Character {
   }
 
   private handleSceneTick() {
-    this.refreshRotation();
     this.refreshCameraDirectionVector();
     this.refreshMovementDirectionVector();
+    this.refreshRotation();
 
     const { mesh, movementDirectionVector, scene, camera } = this;
     if (!mesh || !movementDirectionVector || !camera) return;
@@ -108,7 +108,7 @@ export class Character {
     const movementDirectionVector3 = new Vector3(
       movementDirectionVector.x,
       0,
-      movementDirectionVector.y
+      movementDirectionVector.y,
     );
 
     const positionIncrease = movementDirectionVector3.scale(delta);
@@ -116,58 +116,6 @@ export class Character {
     mesh.position.addInPlace(positionIncrease);
     camera.position.addInPlace(positionIncrease);
     camera.setTarget(mesh.position);
-  }
-
-  private refreshCameraDirectionVector() {
-    const { camera, mesh } = this;
-    if (!mesh) return;
-    const cameraVector2 = new Vector2(camera.position.x, camera.position.z);
-    const targetVector2 = new Vector2(mesh.position.x, mesh.position.z);
-
-    const cameraDirectionVector = targetVector2.subtract(cameraVector2);
-
-    if (this.cameraDirectionVector) {
-      this.cameraDirectionVector.copyFrom(cameraDirectionVector);
-    } else {
-      this.cameraDirectionVector = cameraDirectionVector;
-    }
-  }
-
-  private refreshMovementDirectionVector() {
-    const { cameraDirectionVector, pressedKeyBoardKeys } = this;
-    if (!cameraDirectionVector) return;
-
-    if (this.movementDirectionVector) {
-      this.movementDirectionVector.copyFrom(new Vector2(0, 0));
-    } else {
-      this.movementDirectionVector = new Vector2(0, 0);
-    }
-
-    // Движение на север.
-    if (pressedKeyBoardKeys.has("KeyW")) {
-      this.movementDirectionVector.addInPlace(cameraDirectionVector);
-    }
-
-    // Движение на юг.
-    if (pressedKeyBoardKeys.has("KeyS")) {
-      this.movementDirectionVector.addInPlace(cameraDirectionVector.scale(-1));
-    }
-
-    // Движение на восток.
-    if (pressedKeyBoardKeys.has("KeyD")) {
-      this.movementDirectionVector.addInPlace(
-        new Vector2(cameraDirectionVector.y, -cameraDirectionVector.x)
-      );
-    }
-
-    // Движение на запад.
-    if (pressedKeyBoardKeys.has("KeyA")) {
-      this.movementDirectionVector.addInPlace(
-        new Vector2(-cameraDirectionVector.y, cameraDirectionVector.x)
-      );
-    }
-
-    this.movementDirectionVector.normalize();
   }
 
   private refreshRotation() {
@@ -192,8 +140,60 @@ export class Character {
 
     mesh.lookAt(
       mesh.position.subtract(
-        new Vector3(movementDirectionVector.x, 0, movementDirectionVector.y)
-      )
+        new Vector3(movementDirectionVector.x, 0, movementDirectionVector.y),
+      ),
     );
+  }
+
+  private refreshCameraDirectionVector() {
+    const { camera, mesh } = this;
+    if (!mesh) return;
+    const cameraVector2 = new Vector2(camera.position.x, camera.position.z);
+    const targetVector2 = new Vector2(mesh.position.x, mesh.position.z);
+
+    const cameraDirectionVector = targetVector2.subtract(cameraVector2);
+
+    if (this.cameraDirectionVector) {
+      this.cameraDirectionVector.copyFrom(cameraDirectionVector);
+    } else {
+      this.cameraDirectionVector = cameraDirectionVector;
+    }
+  }
+
+  private refreshMovementDirectionVector() {
+    const { cameraDirectionVector, pressedKeyBoardKeys } = this;
+    if (!cameraDirectionVector) return;
+
+    if (this.movementDirectionVector) {
+      this.movementDirectionVector.copyFrom(Vector2.Zero());
+    } else {
+      this.movementDirectionVector = Vector2.Zero();
+    }
+
+    // Движение на север.
+    if (pressedKeyBoardKeys.has("KeyW")) {
+      this.movementDirectionVector.addInPlace(cameraDirectionVector);
+    }
+
+    // Движение на юг.
+    if (pressedKeyBoardKeys.has("KeyS")) {
+      this.movementDirectionVector.addInPlace(cameraDirectionVector.scale(-1));
+    }
+
+    // Движение на восток.
+    if (pressedKeyBoardKeys.has("KeyD")) {
+      this.movementDirectionVector.addInPlace(
+        new Vector2(cameraDirectionVector.y, -cameraDirectionVector.x),
+      );
+    }
+
+    // Движение на запад.
+    if (pressedKeyBoardKeys.has("KeyA")) {
+      this.movementDirectionVector.addInPlace(
+        new Vector2(-cameraDirectionVector.y, cameraDirectionVector.x),
+      );
+    }
+
+    this.movementDirectionVector.normalize();
   }
 }
