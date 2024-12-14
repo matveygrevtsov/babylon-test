@@ -1,15 +1,16 @@
 import {
+  AbstractMesh,
+  AnimationGroup,
   ArcRotateCamera,
-  ISceneLoaderAsyncResult,
   KeyboardInfo,
   Scene,
   SceneLoader,
   Vector3,
 } from "@babylonjs/core";
 import { TGetObjectValues } from "../../../types";
-import { ANIMAIONS, INITIAL_PRESSED_KEYBOARD_KEYS_RECORD } from "./constants";
+import { ANIMAIONS, KEYBOARD_KEYS } from "./constants";
 import { KeyboardEventTypes, Vector2 } from "babylonjs";
-import { TKeyboardKeys, TPressedKeyBoardKeysRecord } from "./types";
+import { TKeyboardKeys } from "./types";
 
 interface IProps {
   scene: Scene;
@@ -21,13 +22,16 @@ interface IProps {
 export class Character {
   private readonly scene: Scene;
   private readonly camera: ArcRotateCamera;
-  private readonly pressedKeyBoardKeysRecord: TPressedKeyBoardKeysRecord;
-  private sceneLoaderAsyncResult?: ISceneLoaderAsyncResult;
+  private readonly pressedKeyBoardKeys: Set<TKeyboardKeys>;
+  private mesh?: AbstractMesh;
+  private animations?: AnimationGroup[];
+  private cameraDirectionVector?: Vector2;
+  private movementDirectionVector?: Vector2;
 
   constructor({ scene, camera }: IProps) {
     this.scene = scene;
     this.camera = camera;
-    this.pressedKeyBoardKeysRecord = INITIAL_PRESSED_KEYBOARD_KEYS_RECORD;
+    this.pressedKeyBoardKeys = new Set();
 
     this.loadToScene().then(() => {
       this.animate("Idle");
@@ -40,43 +44,50 @@ export class Character {
       null,
       "assets/",
       "Adventurer.gltf",
-      this.scene
-    ).then((sceneLoaderAsyncResult) => {
-      this.sceneLoaderAsyncResult = sceneLoaderAsyncResult;
+      this.scene,
+    ).then(({ meshes, animationGroups }) => {
+      this.mesh = meshes[0];
+      this.animations = animationGroups;
     });
   }
 
   private animate(animationName: TGetObjectValues<typeof ANIMAIONS>) {
-    this.sceneLoaderAsyncResult?.animationGroups.forEach((animationGroup) => {
-      if (animationGroup.name === animationName) {
-        animationGroup.start(true);
+    this.animations?.forEach((animation) => {
+      if (animation.name === animationName) {
+        animation.start(true);
       } else {
-        animationGroup.stop();
+        animation.stop();
       }
     });
   }
 
   private addListeners() {
     // Данный обработчик срабатывает при нажатии на любую клавишу клавиатуры.
-    this.scene.onKeyboardObservable.add((event) =>
-      this.handleKeyboardEvent(event)
-    );
+    this.scene.onKeyboardObservable.add((event) => {
+      this.handleKeyboardEvent(event);
+    });
     // Данный обработчик срабатывает на каждый кадр.
-    this.scene.onBeforeRenderObservable.add(() => this.handleSceneTick());
+    this.scene.onBeforeRenderObservable.add(() => {
+      this.handleSceneTick();
+    });
   }
 
   private handleKeyboardEvent(keyboardInfo: KeyboardInfo) {
     const key = keyboardInfo.event.code as TKeyboardKeys;
-    const isKeyDown = keyboardInfo.type === KeyboardEventTypes.KEYDOWN;
-    if (typeof this.pressedKeyBoardKeysRecord[key] !== "boolean") return;
-    const { sceneLoaderAsyncResult, pressedKeyBoardKeysRecord } = this;
-    if (!sceneLoaderAsyncResult) return;
-    pressedKeyBoardKeysRecord[key] = isKeyDown;
+    if (!KEYBOARD_KEYS[key]) return;
+
+    const { pressedKeyBoardKeys } = this;
+    if (keyboardInfo.type === KeyboardEventTypes.KEYDOWN) {
+      pressedKeyBoardKeys.add(key);
+    } else {
+      pressedKeyBoardKeys.delete(key);
+    }
+
     if (
-      pressedKeyBoardKeysRecord.KeyW ||
-      pressedKeyBoardKeysRecord.KeyS ||
-      pressedKeyBoardKeysRecord.KeyA ||
-      pressedKeyBoardKeysRecord.KeyD
+      pressedKeyBoardKeys.has("KeyW") ||
+      pressedKeyBoardKeys.has("KeyS") ||
+      pressedKeyBoardKeys.has("KeyD") ||
+      pressedKeyBoardKeys.has("KeyA")
     ) {
       this.animate("Run");
     } else {
@@ -85,27 +96,104 @@ export class Character {
   }
 
   private handleSceneTick() {
-    const { sceneLoaderAsyncResult, camera, pressedKeyBoardKeysRecord } = this;
-    if (!sceneLoaderAsyncResult) return;
-    const [root] = sceneLoaderAsyncResult.meshes;
+    this.refreshCameraDirectionVector();
+    this.refreshMovementDirectionVector();
+    this.refreshRotation();
 
-    const normalizedMovementVector = (() => {
-      const targetVector2 = new Vector2(root.position.z, root.position.x);
-      const cameraVector2 = new Vector2(camera.position.z, camera.position.x);
-      const movementVector = targetVector2.subtract(cameraVector2).normalize();
-      console.log(movementVector);
-      return new Vector3(movementVector.y, 0, movementVector.x);
-    })();
+    const { mesh, movementDirectionVector, scene, camera } = this;
+    if (!mesh || !movementDirectionVector || !camera) return;
 
-    const delta = ((this.scene.deltaTime ?? 0) / 1000) * 4;
+    const delta = ((scene.deltaTime ?? 0) / 1000) * 4;
 
-    const movementVector = normalizedMovementVector.scale(delta);
+    const movementDirectionVector3 = new Vector3(
+      movementDirectionVector.x,
+      0,
+      movementDirectionVector.y,
+    );
 
-    if (pressedKeyBoardKeysRecord.KeyW) {
-      root.position.addInPlace(movementVector);
-      root.lookAt(root.position.subtract(normalizedMovementVector));
-      camera.position.addInPlace(movementVector);
-      camera.setTarget(root.position);
+    const positionIncrease = movementDirectionVector3.scale(delta);
+
+    mesh.position.addInPlace(positionIncrease);
+    camera.position.addInPlace(positionIncrease);
+    camera.setTarget(mesh.position);
+  }
+
+  private refreshRotation() {
+    const { pressedKeyBoardKeys, movementDirectionVector, mesh } = this;
+
+    if (!mesh) return;
+
+    if (!movementDirectionVector) {
+      mesh.lookAt(mesh.position.subtract(new Vector3(0, 0, 1)));
+      return;
     }
+
+    if (
+      (!pressedKeyBoardKeys.has("KeyW") &&
+        !pressedKeyBoardKeys.has("KeyS") &&
+        !pressedKeyBoardKeys.has("KeyD") &&
+        !pressedKeyBoardKeys.has("KeyA")) ||
+      (movementDirectionVector.x === 0 && movementDirectionVector.y === 0)
+    ) {
+      return;
+    }
+
+    mesh.lookAt(
+      mesh.position.subtract(
+        new Vector3(movementDirectionVector.x, 0, movementDirectionVector.y),
+      ),
+    );
+  }
+
+  private refreshCameraDirectionVector() {
+    const { camera, mesh } = this;
+    if (!mesh) return;
+    const cameraVector2 = new Vector2(camera.position.x, camera.position.z);
+    const targetVector2 = new Vector2(mesh.position.x, mesh.position.z);
+
+    const cameraDirectionVector = targetVector2.subtract(cameraVector2);
+
+    if (this.cameraDirectionVector) {
+      this.cameraDirectionVector.copyFrom(cameraDirectionVector);
+    } else {
+      this.cameraDirectionVector = cameraDirectionVector;
+    }
+  }
+
+  private refreshMovementDirectionVector() {
+    const { cameraDirectionVector, pressedKeyBoardKeys } = this;
+    if (!cameraDirectionVector) return;
+
+    if (this.movementDirectionVector) {
+      this.movementDirectionVector.copyFrom(Vector2.Zero());
+    } else {
+      this.movementDirectionVector = Vector2.Zero();
+    }
+
+    // Движение на север.
+    if (pressedKeyBoardKeys.has("KeyW")) {
+      this.movementDirectionVector.addInPlace(cameraDirectionVector);
+    }
+
+    // Движение на юг.
+    if (pressedKeyBoardKeys.has("KeyS")) {
+      this.movementDirectionVector.addInPlace(cameraDirectionVector.scale(-1));
+    }
+
+    // Движение на восток.
+    if (pressedKeyBoardKeys.has("KeyD")) {
+      this.movementDirectionVector.addInPlace(
+        new Vector2(cameraDirectionVector.y, -cameraDirectionVector.x),
+      );
+    }
+
+    // Движение на запад.
+    if (pressedKeyBoardKeys.has("KeyA")) {
+      this.movementDirectionVector.addInPlace(
+        new Vector2(-cameraDirectionVector.y, cameraDirectionVector.x),
+      );
+    }
+
+    this.movementDirectionVector.normalize();
   }
 }
