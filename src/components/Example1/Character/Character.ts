@@ -128,19 +128,8 @@ export class Character {
   }
 
   private refreshRotation() {
-    const { pressedKeyBoardKeys, movementDirectionVector, mesh } = this;
-    if (!mesh || !movementDirectionVector) return;
-
-    if (
-      (!pressedKeyBoardKeys.has("KeyW") &&
-        !pressedKeyBoardKeys.has("KeyS") &&
-        !pressedKeyBoardKeys.has("KeyD") &&
-        !pressedKeyBoardKeys.has("KeyA")) ||
-      (movementDirectionVector.x === 0 && movementDirectionVector.z === 0)
-    ) {
-      return;
-    }
-
+    const { movementDirectionVector, mesh } = this;
+    if (!movementDirectionVector?.length() || !mesh) return;
     mesh.lookAt(mesh.position.subtract(movementDirectionVector));
   }
 

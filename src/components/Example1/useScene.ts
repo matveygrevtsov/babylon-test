@@ -53,6 +53,10 @@ export const useScene = () => {
       camera,
     });
 
+    const cube = MeshBuilder.CreateBox("cube", { size: 1 }, scene);
+    cube.position.y = 0.5;
+    cube.position.z = 5; // Позиция куба
+
     // Пол (земля).
     const ground = MeshBuilder.CreateGround(
       "ground",
