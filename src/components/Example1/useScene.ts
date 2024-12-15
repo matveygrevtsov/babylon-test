@@ -35,7 +35,7 @@ export const useScene = () => {
       -Math.PI / 2,
       Math.PI / 4,
       10,
-      new Vector3(0, 0, 0),
+      Vector3.Zero(),
       scene,
     );
     // Targets the camera to scene origin

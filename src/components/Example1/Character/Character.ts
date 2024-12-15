@@ -140,12 +140,7 @@ export class Character {
 
     const delta = ((scene.deltaTime ?? 0) / 1000) * 4;
 
-    const positionIncrease = movementDirectionVector.scale(delta);
-
-    const currentPosition = mesh.position;
-    mesh.moveWithCollisions(positionIncrease);
-    const newPosition = mesh.position;
-    camera.position.addInPlace(newPosition.subtract(currentPosition));
-    camera.setTarget(newPosition);
+    mesh.moveWithCollisions(movementDirectionVector.scale(delta));
+    camera.setTarget(mesh.position);
   }
 }
