@@ -32,14 +32,7 @@ export class Character {
     this.camera = camera;
     this.pressedKeyBoardKeys = new Set();
 
-    this.loadToScene().then(() => {
-      this.animate("Idle");
-      this.addListeners();
-    });
-  }
-
-  private loadToScene() {
-    return SceneLoader.ImportMeshAsync(
+    SceneLoader.ImportMeshAsync(
       null,
       "assets/",
       "Adventurer.gltf",
@@ -47,6 +40,7 @@ export class Character {
     ).then(({ meshes, animationGroups }) => {
       this.mesh = meshes[0];
       this.animations = animationGroups;
+      this.addListeners();
     });
   }
 
