@@ -43,7 +43,7 @@ export class Character {
       null,
       "assets/",
       "Adventurer.gltf",
-      this.scene
+      this.scene,
     ).then(({ meshes, animationGroups }) => {
       this.mesh = meshes[0];
       this.animations = animationGroups;
@@ -81,29 +81,13 @@ export class Character {
     } else {
       pressedKeyBoardKeys.delete(key);
     }
-
-    this.refreshAnimation();
   }
 
   private handleSceneTick() {
     this.refreshMovementDirectionVector();
+    this.refreshAnimation();
     this.refreshRotation();
     this.refreshPosition();
-  }
-
-  private refreshAnimation() {
-    const { pressedKeyBoardKeys } = this;
-
-    if (
-      pressedKeyBoardKeys.has("KeyW") ||
-      pressedKeyBoardKeys.has("KeyS") ||
-      pressedKeyBoardKeys.has("KeyD") ||
-      pressedKeyBoardKeys.has("KeyA")
-    ) {
-      this.animate("Run");
-    } else {
-      this.animate("Idle");
-    }
   }
 
   private refreshMovementDirectionVector() {
@@ -119,30 +103,34 @@ export class Character {
     cameraDirection.y = 0;
 
     // Движение на север.
-    if (pressedKeyBoardKeys.has("KeyW")) {
+    if (pressedKeyBoardKeys.has("KeyW") && !pressedKeyBoardKeys.has("KeyS")) {
       this.movementDirectionVector.addInPlace(cameraDirection);
     }
 
     // Движение на юг.
-    if (pressedKeyBoardKeys.has("KeyS")) {
+    if (pressedKeyBoardKeys.has("KeyS") && !pressedKeyBoardKeys.has("KeyW")) {
       this.movementDirectionVector.addInPlace(cameraDirection.scale(-1));
     }
 
     // Движение на восток.
-    if (pressedKeyBoardKeys.has("KeyD")) {
+    if (pressedKeyBoardKeys.has("KeyD") && !pressedKeyBoardKeys.has("KeyA")) {
       this.movementDirectionVector.addInPlace(
-        new Vector3(cameraDirection.z, 0, -cameraDirection.x)
+        new Vector3(cameraDirection.z, 0, -cameraDirection.x),
       );
     }
 
     // Движение на запад.
-    if (pressedKeyBoardKeys.has("KeyA")) {
+    if (pressedKeyBoardKeys.has("KeyA") && !pressedKeyBoardKeys.has("KeyD")) {
       this.movementDirectionVector.addInPlace(
-        new Vector3(-cameraDirection.z, 0, cameraDirection.x)
+        new Vector3(-cameraDirection.z, 0, cameraDirection.x),
       );
     }
 
     this.movementDirectionVector.normalize();
+  }
+
+  private refreshAnimation() {
+    this.animate(this.movementDirectionVector?.length() ? "Run" : "Idle");
   }
 
   private refreshRotation() {
