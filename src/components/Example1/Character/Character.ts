@@ -39,6 +39,7 @@ export class Character {
       this.scene,
     ).then(({ meshes, animationGroups }) => {
       this.mesh = meshes[0];
+      this.mesh.checkCollisions = true;
       this.animations = animationGroups;
       this.addListeners();
     });
@@ -141,8 +142,10 @@ export class Character {
 
     const positionIncrease = movementDirectionVector.scale(delta);
 
-    mesh.position.addInPlace(positionIncrease);
-    camera.position.addInPlace(positionIncrease);
-    camera.setTarget(mesh.position);
+    const currentPosition = mesh.position;
+    mesh.moveWithCollisions(positionIncrease);
+    const newPosition = mesh.position;
+    camera.position.addInPlace(newPosition.subtract(currentPosition));
+    camera.setTarget(newPosition);
   }
 }
