@@ -36,7 +36,7 @@ export class Character {
       null,
       "assets/",
       "Adventurer.gltf",
-      this.scene,
+      this.scene
     ).then(({ meshes, animationGroups }) => {
       this.mesh = meshes[0];
       this.animations = animationGroups;
@@ -109,14 +109,14 @@ export class Character {
     // Движение на восток.
     if (pressedKeyBoardKeys.has("KeyD") && !pressedKeyBoardKeys.has("KeyA")) {
       this.movementDirectionVector.addInPlace(
-        new Vector3(cameraDirection.z, 0, -cameraDirection.x),
+        new Vector3(cameraDirection.z, 0, -cameraDirection.x)
       );
     }
 
     // Движение на запад.
     if (pressedKeyBoardKeys.has("KeyA") && !pressedKeyBoardKeys.has("KeyD")) {
       this.movementDirectionVector.addInPlace(
-        new Vector3(-cameraDirection.z, 0, cameraDirection.x),
+        new Vector3(-cameraDirection.z, 0, cameraDirection.x)
       );
     }
 
@@ -128,19 +128,8 @@ export class Character {
   }
 
   private refreshRotation() {
-    const { pressedKeyBoardKeys, movementDirectionVector, mesh } = this;
-    if (!mesh || !movementDirectionVector) return;
-
-    if (
-      (!pressedKeyBoardKeys.has("KeyW") &&
-        !pressedKeyBoardKeys.has("KeyS") &&
-        !pressedKeyBoardKeys.has("KeyD") &&
-        !pressedKeyBoardKeys.has("KeyA")) ||
-      (movementDirectionVector.x === 0 && movementDirectionVector.z === 0)
-    ) {
-      return;
-    }
-
+    const { movementDirectionVector, mesh } = this;
+    if (!movementDirectionVector?.length() || !mesh) return;
     mesh.lookAt(mesh.position.subtract(movementDirectionVector));
   }
 

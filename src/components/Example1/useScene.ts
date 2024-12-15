@@ -36,7 +36,7 @@ export const useScene = () => {
       Math.PI / 4,
       10,
       new Vector3(0, 0, 0),
-      scene,
+      scene
     );
     // Targets the camera to scene origin
     camera.setTarget(Vector3.Zero());
@@ -53,11 +53,15 @@ export const useScene = () => {
       camera,
     });
 
+    const cube = MeshBuilder.CreateBox("cube", { size: 1 }, scene);
+    cube.position.y = 0.5;
+    cube.position.z = 5; // Позиция куба
+
     // Пол (земля).
     const ground = MeshBuilder.CreateGround(
       "ground",
       { width: 6, height: 6 },
-      scene,
+      scene
     );
     const groundMaterial = new StandardMaterial("groundMaterial", scene);
     groundMaterial.diffuseColor = Color3.FromHexString("#97ae3b");
