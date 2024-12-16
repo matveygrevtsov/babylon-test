@@ -36,10 +36,11 @@ export class Character {
       null,
       "assets/",
       "Adventurer.gltf",
-      this.scene,
+      this.scene
     ).then(({ meshes, animationGroups }) => {
       this.mesh = meshes[0];
       this.mesh.checkCollisions = true;
+      this.camera.setTarget(this.mesh);
       this.animations = animationGroups;
       this.addListeners();
     });
@@ -110,14 +111,14 @@ export class Character {
     // Движение на восток.
     if (pressedKeyBoardKeys.has("KeyD") && !pressedKeyBoardKeys.has("KeyA")) {
       this.movementDirectionVector.addInPlace(
-        new Vector3(cameraDirection.z, 0, -cameraDirection.x),
+        new Vector3(cameraDirection.z, 0, -cameraDirection.x)
       );
     }
 
     // Движение на запад.
     if (pressedKeyBoardKeys.has("KeyA") && !pressedKeyBoardKeys.has("KeyD")) {
       this.movementDirectionVector.addInPlace(
-        new Vector3(-cameraDirection.z, 0, cameraDirection.x),
+        new Vector3(-cameraDirection.z, 0, cameraDirection.x)
       );
     }
 
@@ -137,10 +138,7 @@ export class Character {
   private refreshPosition() {
     const { mesh, movementDirectionVector, scene, camera } = this;
     if (!mesh || !movementDirectionVector || !camera) return;
-
     const delta = ((scene.deltaTime ?? 0) / 1000) * 4;
-
     mesh.moveWithCollisions(movementDirectionVector.scale(delta));
-    camera.setTarget(mesh.position);
   }
 }

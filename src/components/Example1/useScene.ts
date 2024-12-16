@@ -36,10 +36,9 @@ export const useScene = () => {
       Math.PI / 4,
       10,
       Vector3.Zero(),
-      scene,
+      scene
     );
-    // Targets the camera to scene origin
-    camera.setTarget(Vector3.Zero());
+
     // Attaches the camera to the canvas
     camera.attachControl(canvas, true);
     // Creates a light, aiming 0,1,0
@@ -62,7 +61,7 @@ export const useScene = () => {
     const ground = MeshBuilder.CreateGround(
       "ground",
       { width: 6, height: 6 },
-      scene,
+      scene
     );
     const groundMaterial = new StandardMaterial("groundMaterial", scene);
     groundMaterial.diffuseColor = Color3.FromHexString("#97ae3b");
