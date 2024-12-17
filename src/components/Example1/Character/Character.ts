@@ -3,6 +3,7 @@ import {
   AnimationGroup,
   ArcRotateCamera,
   KeyboardInfo,
+  Mesh,
   Scene,
   SceneLoader,
   Vector3,
@@ -21,16 +22,21 @@ interface IProps {
 
 export class Character {
   private readonly scene: Scene;
-  private readonly camera: ArcRotateCamera;
   private readonly pressedKeyBoardKeys: Set<TKeyboardKeys>;
+  private readonly camera: ArcRotateCamera;
+  private readonly cameraTarget: Mesh;
+
   private mesh?: AbstractMesh;
   private animations?: AnimationGroup[];
   private movementDirectionVector?: Vector3;
 
   constructor({ scene, camera }: IProps) {
     this.scene = scene;
-    this.camera = camera;
     this.pressedKeyBoardKeys = new Set();
+
+    this.camera = camera;
+    this.cameraTarget = new Mesh("cameraTarget", scene);
+    this.camera.setTarget(this.cameraTarget);
 
     SceneLoader.ImportMeshAsync(
       null,
@@ -134,13 +140,18 @@ export class Character {
     mesh.lookAt(mesh.position.subtract(movementDirectionVector));
   }
 
+  private refreshCameraTargetPosition() {
+    const { mesh, cameraTarget } = this;
+    if (!mesh) return;
+    const { x, z } = mesh.position;
+    cameraTarget.position.set(x, 2, z);
+  }
+
   private refreshPosition() {
     const { mesh, movementDirectionVector, scene, camera } = this;
     if (!mesh || !movementDirectionVector || !camera) return;
-
     const delta = ((scene.deltaTime ?? 0) / 1000) * 4;
-
     mesh.moveWithCollisions(movementDirectionVector.scale(delta));
-    camera.setTarget(mesh.position);
+    this.refreshCameraTargetPosition();
   }
 }
