@@ -34,10 +34,13 @@ export const useScene = () => {
       "Camera",
       -Math.PI / 2,
       Math.PI / 4,
-      10,
+      5,
       Vector3.Zero(),
       scene,
     );
+
+    camera.lowerRadiusLimit = 5; // минимальный радиус
+    camera.upperRadiusLimit = 15; // максимальный радиус
 
     // Attaches the camera to the canvas
     camera.attachControl(canvas, true);
