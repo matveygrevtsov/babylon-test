@@ -10,7 +10,7 @@ import {
   ArcRotateCamera,
   CannonJSPlugin,
 } from "@babylonjs/core";
-import { Body, Box, Cylinder, Quaternion, Vec3 } from "cannon-es";
+import { Body, Box, Quaternion, Vec3 } from "cannon-es";
 
 const mapCannonQuaternionToBabylonRotationVector = (
   quaternion: Quaternion
@@ -25,10 +25,7 @@ const mapCannonQuaternionToBabylonRotationVector = (
 };
 
 const CUBE_SIZE = 1;
-
-const GROUND_WIDTH = 6; // X
-const GROUND_HEIGHT = 0.1; // Y
-const GROUND_DEPTH = 6; // Z
+const GROUND_SIZE = 6;
 
 export const useScene = () => {
   const ref = useRef<HTMLCanvasElement>(null);
@@ -75,44 +72,43 @@ export const useScene = () => {
     light.intensity = 0.7;
     // Built-in 'sphere' shape.
 
-    // Создаем капсулу
-    const capsuleHeight = 2;
-    const capsuleRadius = 0.5;
-    const capsule = MeshBuilder.CreateCapsule(
-      "capsule",
-      { radius: capsuleRadius, height: capsuleHeight },
-      scene
-    );
+    // Создаем куб№1
+    const box1 = MeshBuilder.CreateBox("box", { size: CUBE_SIZE }, scene);
 
-    // Создаем физическое тело для капсулы
-    const capsuleBody = new Body({
+    // Добавляем физику к кубу№1
+    const boxBody1 = new Body({
       mass: 1,
-      position: new Vec3(0, 5, 0),
+      position: new Vec3(0, 6, 0),
       fixedRotation: true,
     });
-    capsuleBody.addShape(
-      new Cylinder(capsuleRadius, capsuleRadius, capsuleHeight, 8)
-    );
-    physicsPlugin.world.addBody(capsuleBody);
-
-    // Создаем куб
-    const box = MeshBuilder.CreateBox("box", { size: CUBE_SIZE }, scene);
-
-    // Добавляем физику к кубу
-    const boxBody = new Body({
-      mass: 1,
-      position: new Vec3(0.75 * CUBE_SIZE, CUBE_SIZE / 2, 0.75 * CUBE_SIZE),
-    });
-    const boxShape = new Box(
+    const boxShape1 = new Box(
       new Vec3(CUBE_SIZE / 2, CUBE_SIZE / 2, CUBE_SIZE / 2)
     );
-    boxBody.addShape(boxShape);
-    physicsPlugin.world.addBody(boxBody);
+    boxBody1.addShape(boxShape1);
+    physicsPlugin.world.addBody(boxBody1);
+
+    // Создаем куб№2
+    const box2 = MeshBuilder.CreateBox("box", { size: CUBE_SIZE }, scene);
+
+    // Добавляем физику к кубу№2
+    const boxBody2 = new Body({
+      mass: 0,
+      position: new Vec3(
+        (0.75 * CUBE_SIZE) / 2,
+        CUBE_SIZE / 2,
+        0.75 * CUBE_SIZE
+      ),
+    });
+    const boxShape2 = new Box(
+      new Vec3(CUBE_SIZE / 2, CUBE_SIZE / 2, CUBE_SIZE / 2)
+    );
+    boxBody2.addShape(boxShape2);
+    physicsPlugin.world.addBody(boxBody2);
 
     // Пол (земля).
-    const ground = MeshBuilder.CreateBox(
-      "box",
-      { width: GROUND_WIDTH, height: GROUND_HEIGHT, depth: GROUND_DEPTH },
+    const ground = MeshBuilder.CreateGround(
+      "ground",
+      { width: GROUND_SIZE, height: GROUND_SIZE },
       scene
     );
     const groundMaterial = new StandardMaterial("groundMaterial", scene);
@@ -122,26 +118,24 @@ export const useScene = () => {
     // Добавляем физику к полу
     const groundBody = new Body({
       mass: 0,
-      position: new Vec3(0, -(GROUND_HEIGHT / 2), 0),
+      position: new Vec3(0, 0, 0),
     });
-    const groundShape = new Box(
-      new Vec3(GROUND_WIDTH / 2, GROUND_HEIGHT / 2, GROUND_DEPTH / 2)
-    );
+    const groundShape = new Box(new Vec3(GROUND_SIZE / 2, 0, GROUND_SIZE / 2));
     groundBody.addShape(groundShape);
     physicsPlugin.world.addBody(groundBody);
 
     // Обновляем позицию кубов в каждом кадре
     scene.onBeforeRenderObservable.add(() => {
-      capsule.position.set(
-        capsuleBody.position.x,
-        capsuleBody.position.y,
-        capsuleBody.position.z
+      box1.position.set(
+        boxBody1.position.x,
+        boxBody1.position.y,
+        boxBody1.position.z
       );
 
-      box.position.set(
-        boxBody.position.x,
-        boxBody.position.y,
-        boxBody.position.z
+      box2.position.set(
+        boxBody2.position.x,
+        boxBody2.position.y,
+        boxBody2.position.z
       );
 
       ground.position.set(
@@ -150,17 +144,23 @@ export const useScene = () => {
         groundBody.position.z
       );
 
-      capsule.rotation = mapCannonQuaternionToBabylonRotationVector(
-        capsuleBody.quaternion
+      box1.rotation = mapCannonQuaternionToBabylonRotationVector(
+        boxBody1.quaternion
       );
 
-      box.rotation = mapCannonQuaternionToBabylonRotationVector(
-        boxBody.quaternion
+      box2.rotation = mapCannonQuaternionToBabylonRotationVector(
+        boxBody2.quaternion
       );
 
       ground.rotation = mapCannonQuaternionToBabylonRotationVector(
         groundBody.quaternion
       );
+
+      // box2.position.set(
+      //   boxBody2.position.x,
+      //   boxBody2.position.y,
+      //   boxBody2.position.z
+      // );
     });
 
     engine.runRenderLoop(() => {
