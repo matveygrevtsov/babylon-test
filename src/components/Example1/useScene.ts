@@ -70,9 +70,11 @@ export const useScene = () => {
     groundMaterial.diffuseColor = Color3.FromHexString("#97ae3b");
     ground.material = groundMaterial;
 
-    engine.runRenderLoop(() => {
+    const render = () => {
       scene.render();
-    });
+    };
+
+    engine.runRenderLoop(render);
 
     const handleResize = () => {
       engine.resize();
@@ -80,7 +82,16 @@ export const useScene = () => {
 
     window.addEventListener("resize", handleResize);
 
-    return () => window.removeEventListener("resize", handleResize);
+    return () => {
+      window.removeEventListener("resize", handleResize);
+
+      // Останавливаем рендеринг
+      engine.stopRenderLoop(render);
+
+      // Освобождаем ресурсы
+      scene.dispose();
+      engine.dispose();
+    };
   }, []);
 
   return ref;

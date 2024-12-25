@@ -9,20 +9,10 @@ import {
   Color3,
   ArcRotateCamera,
   CannonJSPlugin,
+  PhysicsViewer,
+  PhysicsImpostor,
+  Mesh,
 } from "@babylonjs/core";
-import { Body, Box, Cylinder, Quaternion, Vec3 } from "cannon-es";
-
-const mapCannonQuaternionToBabylonRotationVector = (
-  quaternion: Quaternion
-): Vector3 => {
-  const { x, y, z, w } = quaternion;
-
-  const rotationX = Math.atan2(2 * (w * x + y * z), 1 - 2 * (x * x + y * y));
-  const rotationY = Math.asin(2 * (w * y - z * x));
-  const rotationZ = Math.atan2(2 * (w * z + x * y), 1 - 2 * (y * y + z * z));
-
-  return new Vector3(rotationX, rotationY, rotationZ);
-};
 
 const CUBE_SIZE = 1;
 
@@ -61,7 +51,7 @@ export const useScene = () => {
       Math.PI / 4,
       15,
       Vector3.Zero(),
-      scene
+      scene,
     );
 
     camera.lowerRadiusLimit = 15; // минимальный радиус
@@ -75,97 +65,122 @@ export const useScene = () => {
     light.intensity = 0.7;
     // Built-in 'sphere' shape.
 
-    // Создаем капсулу
-    const capsuleHeight = 2;
-    const capsuleRadius = 0.5;
-    const capsule = MeshBuilder.CreateCapsule(
-      "capsule",
-      { radius: capsuleRadius, height: capsuleHeight },
-      scene
-    );
-
-    // Создаем физическое тело для капсулы
-    const capsuleBody = new Body({
-      mass: 1,
-      position: new Vec3(0, 5, 0),
-      fixedRotation: true,
-    });
-    capsuleBody.addShape(
-      new Cylinder(capsuleRadius, capsuleRadius, capsuleHeight, 8)
-    );
-    physicsPlugin.world.addBody(capsuleBody);
-
     // Создаем куб
-    const box = MeshBuilder.CreateBox("box", { size: CUBE_SIZE }, scene);
-
-    // Добавляем физику к кубу
-    const boxBody = new Body({
-      mass: 1,
-      position: new Vec3(0.75 * CUBE_SIZE, CUBE_SIZE / 2, 0.75 * CUBE_SIZE),
-    });
-    const boxShape = new Box(
-      new Vec3(CUBE_SIZE / 2, CUBE_SIZE / 2, CUBE_SIZE / 2)
+    const box = MeshBuilder.CreateBox(
+      "box",
+      {
+        size: CUBE_SIZE,
+      },
+      scene,
     );
-    boxBody.addShape(boxShape);
-    physicsPlugin.world.addBody(boxBody);
+    const boxPhysicsImpostor = new PhysicsImpostor(
+      box,
+      PhysicsImpostor.BoxImpostor,
+      { mass: 1 },
+      scene,
+    );
+    box.physicsImpostor = boxPhysicsImpostor;
+    box.position.x = CUBE_SIZE / 2;
+    box.position.y = CUBE_SIZE / 2;
+    box.position.z = CUBE_SIZE / 2;
 
-    // Пол (земля).
+    // Создаем составной объект
+    const compoundMesh = new Mesh("compoundMesh", scene);
+
+    // Верхняя сфера
+    const sphereTop = MeshBuilder.CreateSphere(
+      "sphere",
+      { diameter: 1 },
+      scene,
+    );
+    sphereTop.position.y = 5;
+    sphereTop.parent = compoundMesh;
+    const sphereTopPhysicsImpostor = new PhysicsImpostor(
+      sphereTop,
+      PhysicsImpostor.SphereImpostor,
+      { mass: 1 },
+      scene,
+    );
+    sphereTop.physicsImpostor = sphereTopPhysicsImpostor;
+
+    // Цилиндр
+    const cylinder = MeshBuilder.CreateCylinder(
+      "cylinder",
+      {
+        diameter: 1, // Диаметр основания
+        height: 2, // Высота цилиндра
+        tessellation: 16, // Количество сегментов (для сглаживания)
+      },
+      scene,
+    );
+    cylinder.position.y = 4;
+    cylinder.parent = compoundMesh;
+    const cylinderPhysicsImpostor = new PhysicsImpostor(
+      cylinder,
+      PhysicsImpostor.CylinderImpostor,
+      { mass: 1 },
+      scene,
+    );
+    cylinder.physicsImpostor = cylinderPhysicsImpostor;
+
+    // Нижняя сфера
+    const sphereBottom = MeshBuilder.CreateSphere(
+      "sphere",
+      { diameter: 1 },
+      scene,
+    );
+    sphereBottom.position.y = 3;
+    sphereBottom.parent = compoundMesh;
+    const sphereBottomPhysicsImpostor = new PhysicsImpostor(
+      sphereBottom,
+      PhysicsImpostor.SphereImpostor,
+      { mass: 1 },
+      scene,
+    );
+    sphereBottom.physicsImpostor = sphereBottomPhysicsImpostor;
+
+    const compoundMeshPhysicsImpostor = new PhysicsImpostor(
+      compoundMesh,
+      PhysicsImpostor.NoImpostor,
+      { mass: 1 },
+      scene,
+    );
+    compoundMesh.physicsImpostor = compoundMeshPhysicsImpostor;
+
+    // Создаём пол.
     const ground = MeshBuilder.CreateBox(
       "box",
       { width: GROUND_WIDTH, height: GROUND_HEIGHT, depth: GROUND_DEPTH },
-      scene
+      scene,
     );
     const groundMaterial = new StandardMaterial("groundMaterial", scene);
     groundMaterial.diffuseColor = Color3.FromHexString("#97ae3b");
     ground.material = groundMaterial;
-
-    // Добавляем физику к полу
-    const groundBody = new Body({
-      mass: 0,
-      position: new Vec3(0, -(GROUND_HEIGHT / 2), 0),
-    });
-    const groundShape = new Box(
-      new Vec3(GROUND_WIDTH / 2, GROUND_HEIGHT / 2, GROUND_DEPTH / 2)
+    const groundPhysicsImpostor = new PhysicsImpostor(
+      ground,
+      PhysicsImpostor.BoxImpostor,
+      {
+        mass: 0,
+      },
+      scene,
     );
-    groundBody.addShape(groundShape);
-    physicsPlugin.world.addBody(groundBody);
+    ground.physicsImpostor = groundPhysicsImpostor;
+    ground.position.y = -GROUND_HEIGHT / 2;
 
-    // Обновляем позицию кубов в каждом кадре
+    const physicsViewer = new PhysicsViewer();
+    physicsViewer.showImpostor(boxPhysicsImpostor);
+    physicsViewer.showImpostor(groundPhysicsImpostor);
+    physicsViewer.showImpostor(sphereBottomPhysicsImpostor);
+
     scene.onBeforeRenderObservable.add(() => {
-      capsule.position.set(
-        capsuleBody.position.x,
-        capsuleBody.position.y,
-        capsuleBody.position.z
-      );
-
-      box.position.set(
-        boxBody.position.x,
-        boxBody.position.y,
-        boxBody.position.z
-      );
-
-      ground.position.set(
-        groundBody.position.x,
-        groundBody.position.y,
-        groundBody.position.z
-      );
-
-      capsule.rotation = mapCannonQuaternionToBabylonRotationVector(
-        capsuleBody.quaternion
-      );
-
-      box.rotation = mapCannonQuaternionToBabylonRotationVector(
-        boxBody.quaternion
-      );
-
-      ground.rotation = mapCannonQuaternionToBabylonRotationVector(
-        groundBody.quaternion
-      );
+      compoundMeshPhysicsImpostor.setAngularVelocity(new Vector3(0, 0, 0));
     });
 
-    engine.runRenderLoop(() => {
+    const render = () => {
       scene.render();
-    });
+    };
+
+    engine.runRenderLoop(render);
 
     const handleResize = () => {
       engine.resize();
@@ -173,7 +188,16 @@ export const useScene = () => {
 
     window.addEventListener("resize", handleResize);
 
-    return () => window.removeEventListener("resize", handleResize);
+    return () => {
+      window.removeEventListener("resize", handleResize);
+
+      // Останавливаем рендеринг
+      engine.stopRenderLoop(render);
+
+      // Освобождаем ресурсы
+      scene.dispose();
+      engine.dispose();
+    };
   }, []);
 
   return ref;
