@@ -9,10 +9,10 @@ import {
   Color3,
   ArcRotateCamera,
   CannonJSPlugin,
-  PhysicsViewer,
   PhysicsImpostor,
   Mesh,
 } from "@babylonjs/core";
+import { Inspector } from "@babylonjs/inspector";
 
 const CUBE_SIZE = 1;
 
@@ -51,7 +51,7 @@ export const useScene = () => {
       Math.PI / 4,
       15,
       Vector3.Zero(),
-      scene,
+      scene
     );
 
     camera.lowerRadiusLimit = 15; // минимальный радиус
@@ -71,13 +71,13 @@ export const useScene = () => {
       {
         size: CUBE_SIZE,
       },
-      scene,
+      scene
     );
     const boxPhysicsImpostor = new PhysicsImpostor(
       box,
       PhysicsImpostor.BoxImpostor,
       { mass: 1 },
-      scene,
+      scene
     );
     box.physicsImpostor = boxPhysicsImpostor;
     box.position.x = CUBE_SIZE / 2;
@@ -91,7 +91,7 @@ export const useScene = () => {
     const sphereTop = MeshBuilder.CreateSphere(
       "sphere",
       { diameter: 1 },
-      scene,
+      scene
     );
     sphereTop.position.y = 5;
     sphereTop.parent = compoundMesh;
@@ -99,7 +99,7 @@ export const useScene = () => {
       sphereTop,
       PhysicsImpostor.SphereImpostor,
       { mass: 1 },
-      scene,
+      scene
     );
     sphereTop.physicsImpostor = sphereTopPhysicsImpostor;
 
@@ -111,7 +111,7 @@ export const useScene = () => {
         height: 2, // Высота цилиндра
         tessellation: 16, // Количество сегментов (для сглаживания)
       },
-      scene,
+      scene
     );
     cylinder.position.y = 4;
     cylinder.parent = compoundMesh;
@@ -119,7 +119,7 @@ export const useScene = () => {
       cylinder,
       PhysicsImpostor.CylinderImpostor,
       { mass: 1 },
-      scene,
+      scene
     );
     cylinder.physicsImpostor = cylinderPhysicsImpostor;
 
@@ -127,7 +127,7 @@ export const useScene = () => {
     const sphereBottom = MeshBuilder.CreateSphere(
       "sphere",
       { diameter: 1 },
-      scene,
+      scene
     );
     sphereBottom.position.y = 3;
     sphereBottom.parent = compoundMesh;
@@ -135,7 +135,7 @@ export const useScene = () => {
       sphereBottom,
       PhysicsImpostor.SphereImpostor,
       { mass: 1 },
-      scene,
+      scene
     );
     sphereBottom.physicsImpostor = sphereBottomPhysicsImpostor;
 
@@ -143,7 +143,7 @@ export const useScene = () => {
       compoundMesh,
       PhysicsImpostor.NoImpostor,
       { mass: 1 },
-      scene,
+      scene
     );
     compoundMesh.physicsImpostor = compoundMeshPhysicsImpostor;
 
@@ -151,7 +151,7 @@ export const useScene = () => {
     const ground = MeshBuilder.CreateBox(
       "box",
       { width: GROUND_WIDTH, height: GROUND_HEIGHT, depth: GROUND_DEPTH },
-      scene,
+      scene
     );
     const groundMaterial = new StandardMaterial("groundMaterial", scene);
     groundMaterial.diffuseColor = Color3.FromHexString("#97ae3b");
@@ -162,15 +162,12 @@ export const useScene = () => {
       {
         mass: 0,
       },
-      scene,
+      scene
     );
     ground.physicsImpostor = groundPhysicsImpostor;
     ground.position.y = -GROUND_HEIGHT / 2;
 
-    const physicsViewer = new PhysicsViewer();
-    physicsViewer.showImpostor(boxPhysicsImpostor);
-    physicsViewer.showImpostor(groundPhysicsImpostor);
-    physicsViewer.showImpostor(sphereBottomPhysicsImpostor);
+    Inspector.Show(scene, {});
 
     scene.onBeforeRenderObservable.add(() => {
       compoundMeshPhysicsImpostor.setAngularVelocity(new Vector3(0, 0, 0));
