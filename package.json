@@ -39,7 +39,6 @@
     "@babylonjs/inspector": "7.39.1",
     "@babylonjs/loaders": "7.39.1",
     "babylonjs": "7.38.0",
-    "cannon-es": "0.20.0",
     "react": "19.0.0",
     "react-dom": "19.0.0",
     "react-router-dom": "7.1.0",
