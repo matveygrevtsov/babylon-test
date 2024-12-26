@@ -1,3 +1,6 @@
+// https://doc.babylonjs.com/features/featuresDeepDive/physics/havokPlugin
+// https://www.npmjs.com/package/@babylonjs/havok
+
 import { useEffect, useRef } from "react";
 import {
   Engine,
@@ -5,20 +8,12 @@ import {
   Vector3,
   HemisphericLight,
   MeshBuilder,
-  StandardMaterial,
-  Color3,
-  ArcRotateCamera,
-  CannonJSPlugin,
-  PhysicsImpostor,
-  Mesh,
+  FreeCamera,
+  HavokPlugin,
+  PhysicsAggregate,
+  PhysicsShapeType,
 } from "@babylonjs/core";
-import { Inspector } from "@babylonjs/inspector";
-
-const CUBE_SIZE = 1;
-
-const GROUND_WIDTH = 6; // X
-const GROUND_HEIGHT = 0.1; // Y
-const GROUND_DEPTH = 6; // Z
+import HavokPhysics from "@babylonjs/havok";
 
 export const useScene = () => {
   const ref = useRef<HTMLCanvasElement>(null);
@@ -27,174 +22,76 @@ export const useScene = () => {
     const canvas = ref.current;
     if (!canvas) return;
 
-    canvas.addEventListener("click", () => {
-      canvas.requestPointerLock();
-    });
-
     const engine = new Engine(canvas, true, {
       preserveDrawingBuffer: true,
       stencil: true,
+      disableWebGL2Support: false,
     });
 
-    // Creates a basic Babylon Scene object
-    const scene = new Scene(engine);
+    const createScene = async function () {
+      // This creates a basic Babylon Scene object (non-mesh)
+      const scene = new Scene(engine);
 
-    // Создаем физический мир с помощью Cannon.js
-    const gravity = new Vector3(0, -9.81, 0);
-    const physicsPlugin = new CannonJSPlugin();
-    scene.enablePhysics(gravity, physicsPlugin);
+      // This creates and positions a free camera (non-mesh)
+      const camera = new FreeCamera("camera1", new Vector3(0, 5, -10), scene);
 
-    // Creates and positions a free camera
-    const camera = new ArcRotateCamera(
-      "Camera",
-      -Math.PI / 2,
-      Math.PI / 4,
-      15,
-      Vector3.Zero(),
-      scene
-    );
+      // This targets the camera to scene origin
+      camera.setTarget(Vector3.Zero());
 
-    camera.lowerRadiusLimit = 15; // минимальный радиус
-    camera.upperRadiusLimit = 15; // максимальный радиус
+      // This attaches the camera to the canvas
+      camera.attachControl(canvas, true);
 
-    // Attaches the camera to the canvas
-    camera.attachControl(canvas, true);
-    // Creates a light, aiming 0,1,0
-    const light = new HemisphericLight("light", new Vector3(0, 1, 0), scene);
-    // Dim the light a small amount 0 - 1
-    light.intensity = 0.7;
-    // Built-in 'sphere' shape.
+      // This creates a light, aiming 0,1,0 - to the sky (non-mesh)
+      const light = new HemisphericLight("light", new Vector3(0, 1, 0), scene);
 
-    // Создаем куб
-    const box = MeshBuilder.CreateBox(
-      "box",
-      {
-        size: CUBE_SIZE,
-      },
-      scene
-    );
-    const boxPhysicsImpostor = new PhysicsImpostor(
-      box,
-      PhysicsImpostor.BoxImpostor,
-      { mass: 1 },
-      scene
-    );
-    box.physicsImpostor = boxPhysicsImpostor;
-    box.position.x = CUBE_SIZE / 2;
-    box.position.y = CUBE_SIZE / 2;
-    box.position.z = CUBE_SIZE / 2;
+      // Default intensity is 1. Let's dim the light a small amount
+      light.intensity = 0.7;
 
-    // Создаем составной объект
-    const compoundMesh = new Mesh("compoundMesh", scene);
+      // Our built-in 'sphere' shape.
+      const sphere = MeshBuilder.CreateSphere(
+        "sphere",
+        { diameter: 2, segments: 32 },
+        scene,
+      );
 
-    // Верхняя сфера
-    const sphereTop = MeshBuilder.CreateSphere(
-      "sphere",
-      { diameter: 1 },
-      scene
-    );
-    sphereTop.position.y = 5;
-    sphereTop.parent = compoundMesh;
-    const sphereTopPhysicsImpostor = new PhysicsImpostor(
-      sphereTop,
-      PhysicsImpostor.SphereImpostor,
-      { mass: 1 },
-      scene
-    );
-    sphereTop.physicsImpostor = sphereTopPhysicsImpostor;
+      // Move the sphere upward at 4 units
+      sphere.position.y = 4;
 
-    // Цилиндр
-    const cylinder = MeshBuilder.CreateCylinder(
-      "cylinder",
-      {
-        diameter: 1, // Диаметр основания
-        height: 2, // Высота цилиндра
-        tessellation: 16, // Количество сегментов (для сглаживания)
-      },
-      scene
-    );
-    cylinder.position.y = 4;
-    cylinder.parent = compoundMesh;
-    const cylinderPhysicsImpostor = new PhysicsImpostor(
-      cylinder,
-      PhysicsImpostor.CylinderImpostor,
-      { mass: 1 },
-      scene
-    );
-    cylinder.physicsImpostor = cylinderPhysicsImpostor;
+      // Our built-in 'ground' shape.
+      const ground = MeshBuilder.CreateGround(
+        "ground",
+        { width: 10, height: 10 },
+        scene,
+      );
 
-    // Нижняя сфера
-    const sphereBottom = MeshBuilder.CreateSphere(
-      "sphere",
-      { diameter: 1 },
-      scene
-    );
-    sphereBottom.position.y = 3;
-    sphereBottom.parent = compoundMesh;
-    const sphereBottomPhysicsImpostor = new PhysicsImpostor(
-      sphereBottom,
-      PhysicsImpostor.SphereImpostor,
-      { mass: 1 },
-      scene
-    );
-    sphereBottom.physicsImpostor = sphereBottomPhysicsImpostor;
+      // initialize plugin
+      const havokInstance = await HavokPhysics();
+      // pass the engine to the plugin
+      const hk = new HavokPlugin(true, havokInstance);
+      // enable physics in the scene with a gravity
+      scene.enablePhysics(new Vector3(0, -9.8, 0), hk);
 
-    const compoundMeshPhysicsImpostor = new PhysicsImpostor(
-      compoundMesh,
-      PhysicsImpostor.NoImpostor,
-      { mass: 1 },
-      scene
-    );
-    compoundMesh.physicsImpostor = compoundMeshPhysicsImpostor;
+      // Create a sphere shape and the associated body. Size will be determined automatically.
+      new PhysicsAggregate(
+        sphere,
+        PhysicsShapeType.SPHERE,
+        { mass: 1, restitution: 0.75 },
+        scene,
+      );
 
-    // Создаём пол.
-    const ground = MeshBuilder.CreateBox(
-      "box",
-      { width: GROUND_WIDTH, height: GROUND_HEIGHT, depth: GROUND_DEPTH },
-      scene
-    );
-    const groundMaterial = new StandardMaterial("groundMaterial", scene);
-    groundMaterial.diffuseColor = Color3.FromHexString("#97ae3b");
-    ground.material = groundMaterial;
-    const groundPhysicsImpostor = new PhysicsImpostor(
-      ground,
-      PhysicsImpostor.BoxImpostor,
-      {
-        mass: 0,
-      },
-      scene
-    );
-    ground.physicsImpostor = groundPhysicsImpostor;
-    ground.position.y = -GROUND_HEIGHT / 2;
+      // Create a static box shape.
+      new PhysicsAggregate(ground, PhysicsShapeType.BOX, { mass: 0 }, scene);
 
-    Inspector.Show(scene, {});
+      return scene;
+    };
 
-    scene.onBeforeRenderObservable.add(() => {
-      compoundMeshPhysicsImpostor.setAngularVelocity(new Vector3(0, 0, 0));
+    createScene().then((scene) => {
+      engine.runRenderLoop(function () {
+        if (scene) {
+          scene.render();
+        }
+      });
     });
-
-    const render = () => {
-      scene.render();
-    };
-
-    engine.runRenderLoop(render);
-
-    const handleResize = () => {
-      engine.resize();
-    };
-
-    window.addEventListener("resize", handleResize);
-
-    return () => {
-      window.removeEventListener("resize", handleResize);
-
-      // Останавливаем рендеринг
-      engine.stopRenderLoop(render);
-
-      // Освобождаем ресурсы
-      scene.dispose();
-      engine.dispose();
-    };
   }, []);
 
   return ref;
