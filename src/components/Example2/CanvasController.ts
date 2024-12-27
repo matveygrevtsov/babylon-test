@@ -27,6 +27,7 @@ export class CanvasController {
   private readonly engine: Engine;
   private readonly scene: Scene;
   private readonly render: () => void;
+  private readonly resize: () => void;
   // Объекты на сцене:
   private ground?: GroundMesh;
   private box?: Mesh;
@@ -46,6 +47,10 @@ export class CanvasController {
     this.render = () => {
       this.scene.render();
     };
+
+    this.resize = () => {
+      this.engine.resize();
+    };
   }
 
   public start() {
@@ -60,12 +65,16 @@ export class CanvasController {
   }
 
   public unmount() {
+    window.removeEventListener("resize", this.resize);
+
     this.engine.stopRenderLoop(this.render);
     this.scene.dispose();
     this.engine.dispose();
   }
 
   private initEventListeners() {
+    window.addEventListener("resize", this.resize);
+
     this.scene.onBeforeRenderObservable.add(() => {
       this.capsule?.physicsBody?.setAngularVelocity(Vector3.Zero());
     });
