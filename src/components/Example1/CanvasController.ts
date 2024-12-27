@@ -15,21 +15,20 @@ import {
   PhysicsBody,
 } from "@babylonjs/core";
 import HavokPhysics from "@babylonjs/havok";
+import { Character } from "./Character/Character";
 
 interface IProps {
   canvas: HTMLCanvasElement;
 }
 
 export class CanvasController {
-  private readonly canvas: HTMLCanvasElement;
   private readonly engine: Engine;
   private readonly scene: Scene;
+  private readonly camera: ArcRotateCamera;
   private readonly render: () => void;
   private readonly resize: () => void;
 
   constructor({ canvas }: IProps) {
-    this.canvas = canvas;
-
     this.engine = new Engine(canvas, true, {
       preserveDrawingBuffer: true,
       stencil: true,
@@ -37,6 +36,17 @@ export class CanvasController {
     });
 
     this.scene = new Scene(this.engine);
+
+    const camera = new ArcRotateCamera(
+      "Camera",
+      -Math.PI / 2,
+      Math.PI / 4,
+      15,
+      Vector3.Zero(),
+      this.scene,
+    );
+    camera.attachControl(canvas, true);
+    this.camera = camera;
 
     this.render = () => {
       this.scene.render();
@@ -48,7 +58,6 @@ export class CanvasController {
   }
 
   public async start() {
-    this.initCamera();
     this.initLight();
     await this.initPhysics();
     this.fillScene();
@@ -69,24 +78,11 @@ export class CanvasController {
     window.addEventListener("resize", this.resize);
   }
 
-  private initCamera() {
-    const camera = new ArcRotateCamera(
-      "Camera",
-      -Math.PI / 2,
-      Math.PI / 4,
-      15,
-      Vector3.Zero(),
-      this.scene
-    );
-
-    camera.attachControl(this.canvas, true);
-  }
-
   private initLight() {
     const light = new HemisphericLight(
       "light",
       new Vector3(0, 1, 0),
-      this.scene
+      this.scene,
     );
     light.intensity = 0.7;
   }
@@ -110,50 +106,35 @@ export class CanvasController {
   private fillScene() {
     this.initGround();
     this.initBox();
-    this.initCapsule();
+    this.initCharacter();
   }
 
   private initGround() {
     const ground = MeshBuilder.CreateGround(
       "ground",
       { width: 10, height: 10 },
-      this.scene
+      this.scene,
     );
     new PhysicsAggregate(ground, PhysicsShapeType.BOX, { mass: 0 }, this.scene);
   }
 
   private initBox() {
-    const size = 2;
+    const size = 1;
     const box = MeshBuilder.CreateBox("box", { size }, this.scene);
     box.position.y = size / 2;
-    box.position.z = 5;
+    box.position.z = 3;
     new PhysicsAggregate(
       box,
       PhysicsShapeType.BOX,
       { mass: 1, restitution: 0.75 },
-      this.scene
+      this.scene,
     );
   }
 
-  private initCapsule() {
-    const capsule = MeshBuilder.CreateCapsule(
-      "capsule",
-      {
-        height: 3, // Высота капсулы
-        radius: 0.5, // Радиус капсулы
-        tessellation: 16, // Количество сегментов для сглаживания
-      },
-      this.scene
-    );
-    capsule.position.y = 5;
-    const physicsAggregate = new PhysicsAggregate(
-      capsule,
-      PhysicsShapeType.CAPSULE,
-      { mass: 1, restitution: 0.75 },
-      this.scene
-    );
-    this.scene.onBeforeRenderObservable.add(() => {
-      physicsAggregate.body.setAngularVelocity(Vector3.Zero());
+  private initCharacter() {
+    new Character({
+      scene: this.scene,
+      camera: this.camera,
     });
   }
 }
