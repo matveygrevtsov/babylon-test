@@ -13,6 +13,8 @@ import {
   PhysicsShapeType,
   Scene,
   Vector3,
+  PhysicsViewer,
+  PhysicsBody,
 } from "@babylonjs/core";
 import HavokPhysics from "@babylonjs/havok";
 
@@ -51,6 +53,7 @@ export class CanvasController {
     this.initGeometry();
     this.initPhysics().then(() => {
       this.engine.runRenderLoop(this.render);
+      this.showPhysics();
     });
   }
 
@@ -67,7 +70,7 @@ export class CanvasController {
       Math.PI / 4,
       15,
       Vector3.Zero(),
-      this.scene,
+      this.scene
     );
 
     camera.attachControl(this.canvas, true);
@@ -77,7 +80,7 @@ export class CanvasController {
     const light = new HemisphericLight(
       "light",
       new Vector3(0, 1, 0),
-      this.scene,
+      this.scene
     );
     light.intensity = 0.7;
   }
@@ -91,7 +94,7 @@ export class CanvasController {
     const ground = MeshBuilder.CreateGround(
       "ground",
       { width: 10, height: 10 },
-      this.scene,
+      this.scene
     );
     this.ground = ground;
   }
@@ -100,7 +103,7 @@ export class CanvasController {
     const sphere = MeshBuilder.CreateSphere(
       "sphere",
       { diameter: 2, segments: 32 },
-      this.scene,
+      this.scene
     );
     sphere.position.y = 4;
     this.sphere = sphere;
@@ -129,7 +132,17 @@ export class CanvasController {
       sphere,
       PhysicsShapeType.SPHERE,
       { mass: 1, restitution: 0.75 },
-      scene,
+      scene
     );
+  }
+
+  private showPhysics() {
+    const physicsViewer = new PhysicsViewer();
+    for (const mesh of this.scene.rootNodes) {
+      if ("physicsBody" in mesh) {
+        const physicsBody = mesh.physicsBody as PhysicsBody;
+        physicsViewer.showBody(physicsBody);
+      }
+    }
   }
 }
