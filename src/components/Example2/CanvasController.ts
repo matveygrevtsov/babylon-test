@@ -76,7 +76,7 @@ export class CanvasController {
       Math.PI / 4,
       15,
       Vector3.Zero(),
-      this.scene
+      this.scene,
     );
 
     camera.attachControl(this.canvas, true);
@@ -86,7 +86,7 @@ export class CanvasController {
     const light = new HemisphericLight(
       "light",
       new Vector3(0, 1, 0),
-      this.scene
+      this.scene,
     );
     light.intensity = 0.7;
   }
@@ -117,7 +117,7 @@ export class CanvasController {
     const ground = MeshBuilder.CreateGround(
       "ground",
       { width: 10, height: 10 },
-      this.scene
+      this.scene,
     );
     new PhysicsAggregate(ground, PhysicsShapeType.BOX, { mass: 0 }, this.scene);
   }
@@ -132,7 +132,7 @@ export class CanvasController {
       box,
       PhysicsShapeType.BOX,
       { mass: 1, restitution: 0.75 },
-      this.scene
+      this.scene,
     );
   }
 
@@ -144,14 +144,14 @@ export class CanvasController {
         radius: 0.5, // Радиус капсулы
         tessellation: 16, // Количество сегментов для сглаживания
       },
-      this.scene
+      this.scene,
     );
     capsule.position.y = 5;
     const physicsAggregate = new PhysicsAggregate(
       capsule,
       PhysicsShapeType.CAPSULE,
       { mass: 1, restitution: 0.75 },
-      this.scene
+      this.scene,
     );
     this.scene.onBeforeRenderObservable.add(() => {
       physicsAggregate.body.setAngularVelocity(Vector3.Zero());
