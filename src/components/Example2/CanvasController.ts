@@ -4,10 +4,8 @@
 import {
   ArcRotateCamera,
   Engine,
-  GroundMesh,
   HavokPlugin,
   HemisphericLight,
-  Mesh,
   MeshBuilder,
   PhysicsAggregate,
   PhysicsShapeType,
@@ -28,10 +26,6 @@ export class CanvasController {
   private readonly scene: Scene;
   private readonly render: () => void;
   private readonly resize: () => void;
-  // Объекты на сцене:
-  private ground?: GroundMesh;
-  private box?: Mesh;
-  private capsule?: Mesh;
 
   constructor({ canvas }: IProps) {
     this.canvas = canvas;
@@ -53,15 +47,14 @@ export class CanvasController {
     };
   }
 
-  public start() {
+  public async start() {
     this.initCamera();
     this.initLight();
-    this.initGeometry();
-    this.initPhysics().then(() => {
-      this.initEventListeners();
-      this.engine.runRenderLoop(this.render);
-      this.showPhysics();
-    });
+    await this.initPhysics();
+    this.fillScene();
+    this.showPhysics();
+    this.initEventListeners();
+    this.engine.runRenderLoop(this.render);
   }
 
   public unmount() {
@@ -74,10 +67,6 @@ export class CanvasController {
 
   private initEventListeners() {
     window.addEventListener("resize", this.resize);
-
-    this.scene.onBeforeRenderObservable.add(() => {
-      this.capsule?.physicsBody?.setAngularVelocity(Vector3.Zero());
-    });
   }
 
   private initCamera() {
@@ -102,82 +91,10 @@ export class CanvasController {
     light.intensity = 0.7;
   }
 
-  private initGeometry() {
-    this.initGroundGeometry();
-    this.initBoxGeometry();
-    this.initCapsuleGeometry();
-  }
-
-  private initGroundGeometry() {
-    const ground = MeshBuilder.CreateGround(
-      "ground",
-      { width: 10, height: 10 },
-      this.scene,
-    );
-    this.ground = ground;
-  }
-
-  private initBoxGeometry() {
-    const size = 2;
-    const box = MeshBuilder.CreateBox("box", { size }, this.scene);
-    box.position.x = size / 2;
-    box.position.y = size / 2;
-    box.position.z = size / 2;
-    this.box = box;
-  }
-
-  private initCapsuleGeometry() {
-    const capsule = MeshBuilder.CreateCapsule(
-      "capsule",
-      {
-        height: 3, // Высота капсулы
-        radius: 0.5, // Радиус капсулы
-        tessellation: 16, // Количество сегментов для сглаживания
-      },
-      this.scene,
-    );
-    capsule.position.y = 5;
-    this.capsule = capsule;
-  }
-
   private async initPhysics() {
     const havokInstance = await HavokPhysics();
     const hk = new HavokPlugin(true, havokInstance);
     this.scene.enablePhysics(new Vector3(0, -9.8, 0), hk);
-    this.initGroundPhysics();
-    this.initBoxPhysics();
-    this.initCapsulePhysics();
-  }
-
-  private initGroundPhysics() {
-    const { ground, scene } = this;
-    if (!ground) return;
-
-    new PhysicsAggregate(ground, PhysicsShapeType.BOX, { mass: 0 }, scene);
-  }
-
-  private initBoxPhysics() {
-    const { box, scene } = this;
-    if (!box) return;
-
-    new PhysicsAggregate(
-      box,
-      PhysicsShapeType.BOX,
-      { mass: 1, restitution: 0.75 },
-      scene,
-    );
-  }
-
-  private initCapsulePhysics() {
-    const { capsule, scene } = this;
-    if (!capsule) return;
-
-    new PhysicsAggregate(
-      capsule,
-      PhysicsShapeType.CAPSULE,
-      { mass: 1, restitution: 0.75 },
-      scene,
-    );
   }
 
   private showPhysics() {
@@ -188,5 +105,56 @@ export class CanvasController {
         physicsViewer.showBody(physicsBody);
       }
     }
+  }
+
+  private fillScene() {
+    this.initGround();
+    this.initBox();
+    this.initCapsule();
+  }
+
+  private initGround() {
+    const ground = MeshBuilder.CreateGround(
+      "ground",
+      { width: 10, height: 10 },
+      this.scene,
+    );
+    new PhysicsAggregate(ground, PhysicsShapeType.BOX, { mass: 0 }, this.scene);
+  }
+
+  private initBox() {
+    const size = 2;
+    const box = MeshBuilder.CreateBox("box", { size }, this.scene);
+    box.position.x = size / 2;
+    box.position.y = size / 2;
+    box.position.z = size / 2;
+    new PhysicsAggregate(
+      box,
+      PhysicsShapeType.BOX,
+      { mass: 1, restitution: 0.75 },
+      this.scene,
+    );
+  }
+
+  private initCapsule() {
+    const capsule = MeshBuilder.CreateCapsule(
+      "capsule",
+      {
+        height: 3, // Высота капсулы
+        radius: 0.5, // Радиус капсулы
+        tessellation: 16, // Количество сегментов для сглаживания
+      },
+      this.scene,
+    );
+    capsule.position.y = 5;
+    const physicsAggregate = new PhysicsAggregate(
+      capsule,
+      PhysicsShapeType.CAPSULE,
+      { mass: 1, restitution: 0.75 },
+      this.scene,
+    );
+    this.scene.onBeforeRenderObservable.add(() => {
+      physicsAggregate.body.setAngularVelocity(Vector3.Zero());
+    });
   }
 }
