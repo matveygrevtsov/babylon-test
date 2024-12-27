@@ -13,6 +13,8 @@ import {
   PhysicsShapeType,
   Scene,
   Vector3,
+  PhysicsViewer,
+  PhysicsBody,
 } from "@babylonjs/core";
 import HavokPhysics from "@babylonjs/havok";
 
@@ -51,6 +53,7 @@ export class CanvasController {
     this.initGeometry();
     this.initPhysics().then(() => {
       this.engine.runRenderLoop(this.render);
+      this.showPhysics();
     });
   }
 
@@ -131,5 +134,15 @@ export class CanvasController {
       { mass: 1, restitution: 0.75 },
       scene,
     );
+  }
+
+  private showPhysics() {
+    const physicsViewer = new PhysicsViewer();
+    for (const mesh of this.scene.rootNodes) {
+      if ("physicsBody" in mesh && mesh.physicsBody) {
+        const physicsBody = mesh.physicsBody as PhysicsBody;
+        physicsViewer.showBody(physicsBody);
+      }
+    }
   }
 }
