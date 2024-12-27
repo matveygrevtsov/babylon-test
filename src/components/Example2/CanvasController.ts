@@ -53,6 +53,7 @@ export class CanvasController {
     this.initLight();
     this.initGeometry();
     this.initPhysics().then(() => {
+      this.initEventListeners();
       this.engine.runRenderLoop(this.render);
       this.showPhysics();
     });
@@ -62,6 +63,12 @@ export class CanvasController {
     this.engine.stopRenderLoop(this.render);
     this.scene.dispose();
     this.engine.dispose();
+  }
+
+  private initEventListeners() {
+    this.scene.onBeforeRenderObservable.add(() => {
+      this.capsule?.physicsBody?.setAngularVelocity(Vector3.Zero());
+    });
   }
 
   private initCamera() {
