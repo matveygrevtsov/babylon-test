@@ -29,7 +29,8 @@ export class CanvasController {
   private readonly render: () => void;
   // Объекты на сцене:
   private ground?: GroundMesh;
-  private sphere?: Mesh;
+  private box?: Mesh;
+  private capsule?: Mesh;
 
   constructor({ canvas }: IProps) {
     this.canvas = canvas;
@@ -87,7 +88,8 @@ export class CanvasController {
 
   private initGeometry() {
     this.initGroundGeometry();
-    this.initSphereGeometry();
+    this.initBoxGeometry();
+    this.initCapsuleGeometry();
   }
 
   private initGroundGeometry() {
@@ -99,14 +101,27 @@ export class CanvasController {
     this.ground = ground;
   }
 
-  private initSphereGeometry() {
-    const sphere = MeshBuilder.CreateSphere(
-      "sphere",
-      { diameter: 2, segments: 32 },
+  private initBoxGeometry() {
+    const size = 2;
+    const box = MeshBuilder.CreateBox("box", { size }, this.scene);
+    box.position.x = size / 2;
+    box.position.y = size / 2;
+    box.position.z = size / 2;
+    this.box = box;
+  }
+
+  private initCapsuleGeometry() {
+    const capsule = MeshBuilder.CreateCapsule(
+      "capsule",
+      {
+        height: 3, // Высота капсулы
+        radius: 0.5, // Радиус капсулы
+        tessellation: 16, // Количество сегментов для сглаживания
+      },
       this.scene,
     );
-    sphere.position.y = 4;
-    this.sphere = sphere;
+    capsule.position.y = 5;
+    this.capsule = capsule;
   }
 
   private async initPhysics() {
@@ -114,7 +129,8 @@ export class CanvasController {
     const hk = new HavokPlugin(true, havokInstance);
     this.scene.enablePhysics(new Vector3(0, -9.8, 0), hk);
     this.initGroundPhysics();
-    this.initSpherePhysics();
+    this.initBoxPhysics();
+    this.initCapsulePhysics();
   }
 
   private initGroundPhysics() {
@@ -124,13 +140,25 @@ export class CanvasController {
     new PhysicsAggregate(ground, PhysicsShapeType.BOX, { mass: 0 }, scene);
   }
 
-  private initSpherePhysics() {
-    const { sphere, scene } = this;
-    if (!sphere) return;
+  private initBoxPhysics() {
+    const { box, scene } = this;
+    if (!box) return;
 
     new PhysicsAggregate(
-      sphere,
-      PhysicsShapeType.SPHERE,
+      box,
+      PhysicsShapeType.BOX,
+      { mass: 1, restitution: 0.75 },
+      scene,
+    );
+  }
+
+  private initCapsulePhysics() {
+    const { capsule, scene } = this;
+    if (!capsule) return;
+
+    new PhysicsAggregate(
+      capsule,
+      PhysicsShapeType.CAPSULE,
       { mass: 1, restitution: 0.75 },
       scene,
     );
