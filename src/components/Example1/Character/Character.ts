@@ -51,7 +51,7 @@ export class Character {
         radius: 0.5, // Радиус капсулы
         tessellation: 16, // Количество сегментов для сглаживания
       },
-      this.scene
+      this.scene,
     );
     capsule.isVisible = false;
     capsule.position.y = 1.5;
@@ -59,7 +59,7 @@ export class Character {
       capsule,
       PhysicsShapeType.CAPSULE,
       { mass: 1, restitution: 0, friction: 0 },
-      this.scene
+      this.scene,
     );
 
     physicsAggregate.body.setMassProperties({ inertia: new Vector3(0, 0, 0) }); // Чтобы объект мог перемещаться, но не мог поворачиваться.
@@ -86,6 +86,10 @@ export class Character {
     const { pressedKeyBoardKeys } = this;
     if (keyboardInfo.type === KeyboardEventTypes.KEYDOWN) {
       pressedKeyBoardKeys.add(key);
+
+      if (key === "Space") {
+        this.jump();
+      }
     } else {
       pressedKeyBoardKeys.delete(key);
     }
@@ -95,6 +99,7 @@ export class Character {
     this.refreshMovementDirectionVector();
     this.refreshRotation();
     this.refreshPosition();
+    console.log(this.physicsAggregate?.body.getLinearVelocity().y);
   }
 
   private refreshMovementDirectionVector() {
@@ -122,14 +127,14 @@ export class Character {
     // Движение на восток.
     if (pressedKeyBoardKeys.has("KeyD") && !pressedKeyBoardKeys.has("KeyA")) {
       this.movementDirectionVector.addInPlace(
-        new Vector3(cameraDirection.z, 0, -cameraDirection.x)
+        new Vector3(cameraDirection.z, 0, -cameraDirection.x),
       );
     }
 
     // Движение на запад.
     if (pressedKeyBoardKeys.has("KeyA") && !pressedKeyBoardKeys.has("KeyD")) {
       this.movementDirectionVector.addInPlace(
-        new Vector3(-cameraDirection.z, 0, cameraDirection.x)
+        new Vector3(-cameraDirection.z, 0, cameraDirection.x),
       );
     }
 
@@ -149,6 +154,16 @@ export class Character {
     cameraTarget.position.set(x, y + 2, z);
   }
 
+  private jump() {
+    const { physicsAggregate } = this;
+    if (!physicsAggregate) return;
+    const currentLinearVelocity = physicsAggregate.body.getLinearVelocity();
+    const jumpVector = new Vector3(0, 7, 0);
+    physicsAggregate.body.setLinearVelocity(
+      currentLinearVelocity.add(jumpVector),
+    );
+  }
+
   private refreshPosition() {
     const { movementDirectionVector, scene, physicsAggregate } = this;
     if (!movementDirectionVector || !physicsAggregate) return;
@@ -161,7 +176,7 @@ export class Character {
     const linearVelocity = new Vector3(
       linearVelocityX,
       linearVelocityY,
-      linearVelocityZ
+      linearVelocityZ,
     );
     physicsAggregate.body.setLinearVelocity(linearVelocity);
     this.refreshCameraTargetPosition();

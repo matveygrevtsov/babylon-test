@@ -43,7 +43,7 @@ export class CanvasController {
       Math.PI / 4,
       15,
       Vector3.Zero(),
-      this.scene
+      this.scene,
     );
     camera.attachControl(canvas, true);
     this.camera = camera;
@@ -82,7 +82,7 @@ export class CanvasController {
     const light = new HemisphericLight(
       "light",
       new Vector3(0, 1, 0),
-      this.scene
+      this.scene,
     );
     light.intensity = 0.7;
   }
@@ -113,9 +113,14 @@ export class CanvasController {
     const ground = MeshBuilder.CreateGround(
       "ground",
       { width: 10, height: 10 },
-      this.scene
+      this.scene,
     );
-    new PhysicsAggregate(ground, PhysicsShapeType.BOX, { mass: 0 }, this.scene);
+    new PhysicsAggregate(
+      ground,
+      PhysicsShapeType.BOX,
+      { mass: 0, friction: 0.5, restitution: 0 },
+      this.scene,
+    );
   }
 
   private initBox() {
@@ -126,8 +131,8 @@ export class CanvasController {
     new PhysicsAggregate(
       box,
       PhysicsShapeType.BOX,
-      { mass: 1, restitution: 0.75 },
-      this.scene
+      { mass: 20, restitution: 0, friction: 1 },
+      this.scene,
     );
   }
 

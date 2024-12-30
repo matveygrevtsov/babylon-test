@@ -30,4 +30,5 @@ export const KEYBOARD_KEYS = {
   KeyA: "KeyA",
   KeyS: "KeyS",
   KeyD: "KeyD",
+  Space: "Space",
 } as const;
