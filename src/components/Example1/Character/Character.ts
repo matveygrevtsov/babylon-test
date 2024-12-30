@@ -58,7 +58,7 @@ export class Character {
     const physicsAggregate = new PhysicsAggregate(
       capsule,
       PhysicsShapeType.CAPSULE,
-      { mass: 1, restitution: 0 },
+      { mass: 1, restitution: 0, friction: 0 },
       this.scene
     );
 
@@ -152,12 +152,18 @@ export class Character {
   private refreshPosition() {
     const { movementDirectionVector, scene, physicsAggregate } = this;
     if (!movementDirectionVector || !physicsAggregate) return;
-    const delta = ((scene.deltaTime ?? 0) / 1000) * 10;
+    const delta = ((scene.deltaTime ?? 0) / 1000) * 400;
     const movementVector = movementDirectionVector.scale(delta);
     const currentLinearVelocity = physicsAggregate.body.getLinearVelocity();
-    physicsAggregate.body.setLinearVelocity(
-      currentLinearVelocity.add(movementVector)
+    const linearVelocityX = movementVector.x;
+    const linearVelocityY = currentLinearVelocity.y;
+    const linearVelocityZ = movementVector.z;
+    const linearVelocity = new Vector3(
+      linearVelocityX,
+      linearVelocityY,
+      linearVelocityZ
     );
+    physicsAggregate.body.setLinearVelocity(linearVelocity);
     this.refreshCameraTargetPosition();
   }
 }
