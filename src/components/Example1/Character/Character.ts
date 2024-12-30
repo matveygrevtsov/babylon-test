@@ -51,7 +51,7 @@ export class Character {
         radius: 0.5, // Радиус капсулы
         tessellation: 16, // Количество сегментов для сглаживания
       },
-      this.scene,
+      this.scene
     );
     capsule.isVisible = false;
     capsule.position.y = 1.5;
@@ -59,21 +59,10 @@ export class Character {
       capsule,
       PhysicsShapeType.CAPSULE,
       { mass: 1, restitution: 0 },
-      this.scene,
+      this.scene
     );
 
-    // Ограничение вращения с помощью Joint
-    // const joint = new PhysicsJoint(PhysicsJoint.HingeJoint, {
-    //   pivotA: new Vector3(0, 0, 0), // Позиция на цилиндре
-    //   axisA: new Vector3(0, 1, 0), // Ось Y
-    // });
-
-    // Применение ограничения к физическому телу
-    // this.scene.getPhysicsEngine()?.addJoint(cylinderPhysics, null, joint);
-
-    // this.scene.onAfterRenderObservable.add(() => {
-    //   physicsAggregate.body.setAngularVelocity(Vector3.Zero());
-    // });
+    physicsAggregate.body.setMassProperties({ inertia: new Vector3(0, 0, 0) }); // Чтобы объект мог перемещаться, но не мог поворачиваться.
 
     this.capsule = capsule;
     this.physicsAggregate = physicsAggregate;
@@ -133,14 +122,14 @@ export class Character {
     // Движение на восток.
     if (pressedKeyBoardKeys.has("KeyD") && !pressedKeyBoardKeys.has("KeyA")) {
       this.movementDirectionVector.addInPlace(
-        new Vector3(cameraDirection.z, 0, -cameraDirection.x),
+        new Vector3(cameraDirection.z, 0, -cameraDirection.x)
       );
     }
 
     // Движение на запад.
     if (pressedKeyBoardKeys.has("KeyA") && !pressedKeyBoardKeys.has("KeyD")) {
       this.movementDirectionVector.addInPlace(
-        new Vector3(-cameraDirection.z, 0, cameraDirection.x),
+        new Vector3(-cameraDirection.z, 0, cameraDirection.x)
       );
     }
 
@@ -163,9 +152,12 @@ export class Character {
   private refreshPosition() {
     const { movementDirectionVector, scene, physicsAggregate } = this;
     if (!movementDirectionVector || !physicsAggregate) return;
-    const delta = ((scene.deltaTime ?? 0) / 1000) * 400;
+    const delta = ((scene.deltaTime ?? 0) / 1000) * 10;
     const movementVector = movementDirectionVector.scale(delta);
-    physicsAggregate.body.setLinearVelocity(movementVector);
+    const currentLinearVelocity = physicsAggregate.body.getLinearVelocity();
+    physicsAggregate.body.setLinearVelocity(
+      currentLinearVelocity.add(movementVector)
+    );
     this.refreshCameraTargetPosition();
   }
 }
