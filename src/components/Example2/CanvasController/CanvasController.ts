@@ -75,7 +75,7 @@ export class CanvasController {
       Math.PI / 4,
       15,
       Vector3.Zero(),
-      scene
+      scene,
     );
     camera.attachControl(canvas, true);
     return camera;
@@ -116,7 +116,7 @@ export class CanvasController {
     const ground = MeshBuilder.CreateGround(
       "ground",
       { width: 10, height: 10 },
-      scene
+      scene,
     );
     new PhysicsAggregate(ground, PhysicsShapeType.BOX, { mass: 0 }, scene);
   }
@@ -132,7 +132,7 @@ export class CanvasController {
       box,
       PhysicsShapeType.BOX,
       { mass: 1, restitution: 0.75 },
-      scene
+      scene,
     );
   }
 
