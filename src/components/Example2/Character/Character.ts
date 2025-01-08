@@ -1,59 +1,160 @@
 import {
+  ArcRotateCamera,
+  KeyboardEventTypes,
+  KeyboardInfo,
+  Mesh,
   MeshBuilder,
   PhysicsCharacterController,
   Scene,
   Vector3,
 } from "@babylonjs/core";
-import { CAPSULE_HEIGHT, CAPSULE_RADIUS } from "./constants";
+import {
+  CAPSULE_HEIGHT,
+  CAPSULE_RADIUS,
+  CHARACTER_GRAVITY,
+  KEYBOARD_KEYS,
+  START_POSITION,
+} from "./constants";
+import { TKeyboardKeys } from "./types";
 
 interface IProps {
   scene: Scene;
+  camera: ArcRotateCamera;
 }
 
 export class Character {
   private readonly scene: Scene;
+  private readonly camera: ArcRotateCamera;
+  private readonly mesh: Mesh;
+  private readonly physicsCharacterController: PhysicsCharacterController;
+  private readonly pressedKeyBoardKeys: Set<TKeyboardKeys>;
+  private readonly movementDirectionVector: Vector3;
 
-  constructor({ scene }: IProps) {
+  constructor({ scene, camera }: IProps) {
     this.scene = scene;
-    this.init();
+    this.camera = camera;
+    this.mesh = this.createMesh();
+    this.physicsCharacterController = this.createPhysicsCharacterController();
+    this.pressedKeyBoardKeys = new Set<TKeyboardKeys>();
+    this.movementDirectionVector = Vector3.Zero();
+    this.addListeners();
   }
 
-  private init() {
+  private createMesh() {
     const { scene } = this;
-
-    const characterGravity = new Vector3(0, -18, 0);
-    const position = new Vector3(0, CAPSULE_HEIGHT / 2, -2);
     const capsule = MeshBuilder.CreateCapsule(
       "CharacterDisplay",
       { height: CAPSULE_HEIGHT, radius: CAPSULE_RADIUS },
       scene
     );
-    capsule.position = position;
-    const characterController = new PhysicsCharacterController(
-      position,
+    capsule.position = START_POSITION;
+    return capsule;
+  }
+
+  private createPhysicsCharacterController() {
+    const { scene } = this;
+    const physicsCharacterController = new PhysicsCharacterController(
+      START_POSITION,
       { capsuleHeight: CAPSULE_HEIGHT, capsuleRadius: CAPSULE_RADIUS },
       scene
     );
-
-    scene.onAfterPhysicsObservable.add((_) => {
-      if (scene.deltaTime == undefined) return;
-      const dt = scene.deltaTime / 1000.0;
-      if (dt == 0) return;
-
-      const down = new Vector3(0, -1, 0);
-      const support = characterController.checkSupport(dt, down);
-
-      // Quaternion.FromEulerAnglesToRef(
-      //   0,
-      //   camera.rotation.y,
-      //   0,
-      //   characterOrientation
-      // );
-
-      characterController.setVelocity(new Vector3(0, 0, 1));
-      characterController.integrate(dt, support, characterGravity);
-      const newPosition = characterController.getPosition();
-      capsule.position = newPosition;
-    });
+    return physicsCharacterController;
   }
+
+  private addListeners() {
+    const { scene, handleKeyboard, handleBeforeRender, handleAfterPhysics } =
+      this;
+    scene.onKeyboardObservable.add(handleKeyboard);
+    scene.onBeforeRenderObservable.add(handleBeforeRender);
+    scene.onAfterPhysicsObservable.add(handleAfterPhysics);
+  }
+
+  private refreshMovementDirectionVector() {
+    const { camera, pressedKeyBoardKeys } = this;
+
+    this.movementDirectionVector.copyFrom(Vector3.Zero());
+
+    const cameraDirection = camera.getForwardRay().direction;
+    cameraDirection.y = 0;
+
+    // Движение на север.
+    if (pressedKeyBoardKeys.has("KeyW") && !pressedKeyBoardKeys.has("KeyS")) {
+      this.movementDirectionVector.addInPlace(cameraDirection);
+    }
+
+    // Движение на юг.
+    if (pressedKeyBoardKeys.has("KeyS") && !pressedKeyBoardKeys.has("KeyW")) {
+      this.movementDirectionVector.addInPlace(cameraDirection.scale(-1));
+    }
+
+    // Движение на восток.
+    if (pressedKeyBoardKeys.has("KeyD") && !pressedKeyBoardKeys.has("KeyA")) {
+      this.movementDirectionVector.addInPlace(
+        new Vector3(cameraDirection.z, 0, -cameraDirection.x)
+      );
+    }
+
+    // Движение на запад.
+    if (pressedKeyBoardKeys.has("KeyA") && !pressedKeyBoardKeys.has("KeyD")) {
+      this.movementDirectionVector.addInPlace(
+        new Vector3(-cameraDirection.z, 0, cameraDirection.x)
+      );
+    }
+
+    this.movementDirectionVector.normalize();
+  }
+
+  // private refreshRotation() {
+  //   const { movementDirectionVector, mesh } = this;
+  //   if (!movementDirectionVector?.length() || !mesh) return;
+  //   mesh.lookAt(mesh.position.subtract(movementDirectionVector));
+  // }
+
+  // private refreshPosition() {
+  //   const { mesh, movementDirectionVector, scene, camera } = this;
+  //   if (!mesh || !movementDirectionVector || !camera) return;
+  //   const delta = ((scene.deltaTime ?? 0) / 1000) * 4;
+  //   mesh.moveWithCollisions(movementDirectionVector.scale(delta));
+  //   this.refreshCameraTargetPosition();
+  // }
+
+  handleKeyboard = (keyboardInfo: KeyboardInfo) => {
+    const key = keyboardInfo.event.code as TKeyboardKeys;
+    if (!KEYBOARD_KEYS[key]) return;
+
+    const { pressedKeyBoardKeys } = this;
+    if (keyboardInfo.type === KeyboardEventTypes.KEYDOWN) {
+      pressedKeyBoardKeys.add(key);
+    } else {
+      pressedKeyBoardKeys.delete(key);
+    }
+  };
+
+  handleBeforeRender = () => {
+    this.refreshMovementDirectionVector();
+    // this.refreshRotation();
+    // this.refreshPosition();
+  };
+
+  handleAfterPhysics = () => {
+    const { scene, physicsCharacterController, mesh } = this;
+    if (scene.deltaTime == undefined) return;
+    const dt = scene.deltaTime / 1000.0;
+    if (dt == 0) return;
+
+    const down = new Vector3(0, -1, 0);
+    const support = physicsCharacterController.checkSupport(dt, down);
+
+    // Quaternion.FromEulerAnglesToRef(
+    //   0,
+    //   camera.rotation.y,
+    //   0,
+    //   characterOrientation
+    // );
+
+    physicsCharacterController.setVelocity(new Vector3(0, 0, 1));
+    physicsCharacterController.integrate(dt, support, CHARACTER_GRAVITY);
+    const newPosition = physicsCharacterController.getPosition();
+    mesh.position = newPosition;
+  };
 }

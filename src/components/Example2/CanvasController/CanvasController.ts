@@ -137,8 +137,8 @@ export class CanvasController {
   }
 
   private initCharacter() {
-    const { scene } = this;
-    new Character({ scene });
+    const { scene, camera } = this;
+    new Character({ scene, camera });
   }
 
   render = () => {
