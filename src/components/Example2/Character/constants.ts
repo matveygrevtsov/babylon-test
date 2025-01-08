@@ -7,6 +7,8 @@ export const START_POSITION = new Vector3(0, CAPSULE_HEIGHT / 2, -2);
 
 export const CHARACTER_GRAVITY = new Vector3(0, -18, 0);
 
+export const SPEED = 2;
+
 export const KEYBOARD_KEYS = {
   KeyW: "KeyW",
   KeyA: "KeyA",

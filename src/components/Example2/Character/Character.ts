@@ -13,6 +13,7 @@ import {
   CAPSULE_RADIUS,
   CHARACTER_GRAVITY,
   KEYBOARD_KEYS,
+  SPEED,
   START_POSITION,
 } from "./constants";
 import { TKeyboardKeys } from "./types";
@@ -41,13 +42,13 @@ export class Character {
   }
 
   private createMesh() {
-    const { scene } = this;
+    const { scene, camera } = this;
     const capsule = MeshBuilder.CreateCapsule(
       "CharacterDisplay",
       { height: CAPSULE_HEIGHT, radius: CAPSULE_RADIUS },
       scene
     );
-    capsule.position = START_POSITION;
+    camera.setTarget(capsule);
     return capsule;
   }
 
@@ -137,7 +138,8 @@ export class Character {
   };
 
   handleAfterPhysics = () => {
-    const { scene, physicsCharacterController, mesh } = this;
+    const { scene, physicsCharacterController, mesh, movementDirectionVector } =
+      this;
     if (scene.deltaTime == undefined) return;
     const dt = scene.deltaTime / 1000.0;
     if (dt == 0) return;
@@ -152,7 +154,9 @@ export class Character {
     //   characterOrientation
     // );
 
-    physicsCharacterController.setVelocity(new Vector3(0, 0, 1));
+    physicsCharacterController.setVelocity(
+      movementDirectionVector.scale(SPEED)
+    );
     physicsCharacterController.integrate(dt, support, CHARACTER_GRAVITY);
     const newPosition = physicsCharacterController.getPosition();
     mesh.position = newPosition;
