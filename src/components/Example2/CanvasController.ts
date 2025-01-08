@@ -24,31 +24,16 @@ export class CanvasController {
   private readonly canvas: HTMLCanvasElement;
   private readonly engine: Engine;
   private readonly scene: Scene;
-  private readonly render: () => void;
-  private readonly resize: () => void;
+  private readonly camera: ArcRotateCamera;
 
   constructor({ canvas }: IProps) {
     this.canvas = canvas;
-
-    this.engine = new Engine(canvas, true, {
-      preserveDrawingBuffer: true,
-      stencil: true,
-      disableWebGL2Support: false,
-    });
-
+    this.engine = this.createEngine();
     this.scene = new Scene(this.engine);
-
-    this.render = () => {
-      this.scene.render();
-    };
-
-    this.resize = () => {
-      this.engine.resize();
-    };
+    this.camera = this.createCamera();
   }
 
   public async start() {
-    this.initCamera();
     this.initLight();
     await this.initPhysics();
     this.fillScene();
@@ -58,48 +43,58 @@ export class CanvasController {
   }
 
   public unmount() {
-    window.removeEventListener("resize", this.resize);
-
-    this.engine.stopRenderLoop(this.render);
-    this.scene.dispose();
-    this.engine.dispose();
+    const { engine, scene, resize, render } = this;
+    window.removeEventListener("resize", resize);
+    engine.stopRenderLoop(render);
+    scene.dispose();
+    engine.dispose();
   }
 
   private initEventListeners() {
     window.addEventListener("resize", this.resize);
   }
 
-  private initCamera() {
+  private createEngine() {
+    const { canvas } = this;
+    const engine = new Engine(canvas, true, {
+      preserveDrawingBuffer: true,
+      stencil: true,
+      disableWebGL2Support: false,
+    });
+    return engine;
+  }
+
+  private createCamera() {
+    const { scene, canvas } = this;
     const camera = new ArcRotateCamera(
       "Camera",
       -Math.PI / 2,
       Math.PI / 4,
       15,
       Vector3.Zero(),
-      this.scene,
+      scene,
     );
-
-    camera.attachControl(this.canvas, true);
+    camera.attachControl(canvas, true);
+    return camera;
   }
 
   private initLight() {
-    const light = new HemisphericLight(
-      "light",
-      new Vector3(0, 1, 0),
-      this.scene,
-    );
+    const { scene } = this;
+    const light = new HemisphericLight("light", new Vector3(0, 1, 0), scene);
     light.intensity = 0.7;
   }
 
   private async initPhysics() {
+    const { scene } = this;
     const havokInstance = await HavokPhysics();
     const hk = new HavokPlugin(true, havokInstance);
-    this.scene.enablePhysics(new Vector3(0, -9.8, 0), hk);
+    scene.enablePhysics(new Vector3(0, -9.8, 0), hk);
   }
 
   private showPhysics() {
+    const { scene } = this;
     const physicsViewer = new PhysicsViewer();
-    for (const mesh of this.scene.rootNodes) {
+    for (const mesh of scene.rootNodes) {
       if ("physicsBody" in mesh && mesh.physicsBody) {
         const physicsBody = mesh.physicsBody as PhysicsBody;
         physicsViewer.showBody(physicsBody);
@@ -114,17 +109,19 @@ export class CanvasController {
   }
 
   private initGround() {
+    const { scene } = this;
     const ground = MeshBuilder.CreateGround(
       "ground",
       { width: 10, height: 10 },
-      this.scene,
+      scene,
     );
-    new PhysicsAggregate(ground, PhysicsShapeType.BOX, { mass: 0 }, this.scene);
+    new PhysicsAggregate(ground, PhysicsShapeType.BOX, { mass: 0 }, scene);
   }
 
   private initBox() {
+    const { scene } = this;
     const size = 2;
-    const box = MeshBuilder.CreateBox("box", { size }, this.scene);
+    const box = MeshBuilder.CreateBox("box", { size }, scene);
     box.position.x = size / 2;
     box.position.y = size / 2;
     box.position.z = size / 2;
@@ -132,7 +129,7 @@ export class CanvasController {
       box,
       PhysicsShapeType.BOX,
       { mass: 1, restitution: 0.75 },
-      this.scene,
+      scene,
     );
   }
 
@@ -157,4 +154,12 @@ export class CanvasController {
       physicsAggregate.body.setAngularVelocity(Vector3.Zero());
     });
   }
+
+  render = () => {
+    this.scene.render();
+  };
+
+  resize = () => {
+    this.engine.resize();
+  };
 }
