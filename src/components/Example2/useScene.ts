@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { CanvasController } from "./CanvasController";
+import { CanvasController } from "./CanvasController/CanvasController";
 
 export const useScene = () => {
   const ref = useRef<HTMLCanvasElement>(null);

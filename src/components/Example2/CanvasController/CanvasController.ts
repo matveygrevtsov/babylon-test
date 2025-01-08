@@ -13,8 +13,11 @@ import {
   Vector3,
   PhysicsViewer,
   PhysicsBody,
+  PhysicsCharacterController,
+  Quaternion,
 } from "@babylonjs/core";
 import HavokPhysics from "@babylonjs/havok";
+import { Character } from "../Character/Character";
 
 interface IProps {
   canvas: HTMLCanvasElement;
@@ -72,7 +75,7 @@ export class CanvasController {
       Math.PI / 4,
       15,
       Vector3.Zero(),
-      scene,
+      scene
     );
     camera.attachControl(canvas, true);
     return camera;
@@ -105,7 +108,7 @@ export class CanvasController {
   private fillScene() {
     this.initGround();
     this.initBox();
-    this.initCapsule();
+    this.initCharacter();
   }
 
   private initGround() {
@@ -113,7 +116,7 @@ export class CanvasController {
     const ground = MeshBuilder.CreateGround(
       "ground",
       { width: 10, height: 10 },
-      scene,
+      scene
     );
     new PhysicsAggregate(ground, PhysicsShapeType.BOX, { mass: 0 }, scene);
   }
@@ -122,37 +125,20 @@ export class CanvasController {
     const { scene } = this;
     const size = 2;
     const box = MeshBuilder.CreateBox("box", { size }, scene);
-    box.position.x = size / 2;
+    box.position.x = 0;
     box.position.y = size / 2;
-    box.position.z = size / 2;
+    box.position.z = 0;
     new PhysicsAggregate(
       box,
       PhysicsShapeType.BOX,
       { mass: 1, restitution: 0.75 },
-      scene,
+      scene
     );
   }
 
-  private initCapsule() {
-    const capsule = MeshBuilder.CreateCapsule(
-      "capsule",
-      {
-        height: 3, // Высота капсулы
-        radius: 0.5, // Радиус капсулы
-        tessellation: 16, // Количество сегментов для сглаживания
-      },
-      this.scene,
-    );
-    capsule.position.y = 5;
-    const physicsAggregate = new PhysicsAggregate(
-      capsule,
-      PhysicsShapeType.CAPSULE,
-      { mass: 1, restitution: 0.75 },
-      this.scene,
-    );
-    this.scene.onBeforeRenderObservable.add(() => {
-      physicsAggregate.body.setAngularVelocity(Vector3.Zero());
-    });
+  private initCharacter() {
+    const { scene } = this;
+    new Character({ scene });
   }
 
   render = () => {
