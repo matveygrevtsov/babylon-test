@@ -1,5 +1,6 @@
 import {
   ArcRotateCamera,
+  CharacterSupportedState,
   KeyboardEventTypes,
   KeyboardInfo,
   Mesh,
@@ -126,6 +127,10 @@ export class Character {
     const { pressedKeyBoardKeys } = this;
     if (keyboardInfo.type === KeyboardEventTypes.KEYDOWN) {
       pressedKeyBoardKeys.add(key);
+      if (key === "Space") {
+        this.physicsCharacterController.setVelocity(new Vector3(0, 4, 0));
+        console.log(1);
+      }
     } else {
       pressedKeyBoardKeys.delete(key);
     }
@@ -141,23 +146,23 @@ export class Character {
     const { scene, physicsCharacterController, mesh, movementDirectionVector } =
       this;
     if (scene.deltaTime == undefined) return;
-    const dt = scene.deltaTime / 1000.0;
-    if (dt == 0) return;
+    const deltaTime = scene.deltaTime / 1000.0;
+    if (deltaTime == 0) return;
 
     const down = new Vector3(0, -1, 0);
-    const support = physicsCharacterController.checkSupport(dt, down);
-
-    // Quaternion.FromEulerAnglesToRef(
-    //   0,
-    //   camera.rotation.y,
-    //   0,
-    //   characterOrientation
-    // );
+    const characterSurfaceInfo = physicsCharacterController.checkSupport(
+      deltaTime,
+      down
+    );
 
     physicsCharacterController.setVelocity(
       movementDirectionVector.scale(SPEED)
     );
-    physicsCharacterController.integrate(dt, support, CHARACTER_GRAVITY);
+    physicsCharacterController.integrate(
+      deltaTime,
+      characterSurfaceInfo,
+      CHARACTER_GRAVITY
+    );
     const newPosition = physicsCharacterController.getPosition();
     mesh.position = newPosition;
   };
