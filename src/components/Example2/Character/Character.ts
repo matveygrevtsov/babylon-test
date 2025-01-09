@@ -16,6 +16,7 @@ import {
   START_POSITION,
 } from "./constants";
 import { MovementDirectionController } from "./MovementDirectionController/MovementDirectionController";
+import { KeyboardController } from "./KeyboardController/KeyboardController";
 
 interface IProps {
   scene: Scene;
@@ -26,18 +27,25 @@ export class Character {
   private readonly scene: Scene;
   private readonly camera: ArcRotateCamera;
   private readonly mesh: Mesh;
+  private readonly keyboardController: KeyboardController;
   private readonly movementDirectionController: MovementDirectionController;
   private readonly physicsCharacterController: PhysicsCharacterController;
+  private whatsToJump: boolean;
 
   constructor({ scene, camera }: IProps) {
     this.scene = scene;
     this.camera = camera;
     this.mesh = this.createMesh();
+    this.keyboardController = new KeyboardController({
+      scene,
+      handlers: { Space: this.handleJump },
+    });
     this.movementDirectionController = new MovementDirectionController({
       scene,
       camera,
     });
     this.physicsCharacterController = this.createPhysicsCharacterController();
+    this.whatsToJump = false;
     this.addListeners();
   }
 
@@ -75,6 +83,15 @@ export class Character {
     const movementDirectionVector =
       movementDirectionController.getMovementDirectionVector();
     const currentVelocity = physicsCharacterController.getVelocity();
+    const isGrounded =
+      characterSurfaceInfo.supportedState == CharacterSupportedState.SUPPORTED;
+
+    console.log(this.whatsToJump);
+
+    if (this.whatsToJump) {
+      this.whatsToJump = false;
+    }
+
     const velocity = movementDirectionVector.scale(SPEED);
     const result = physicsCharacterController.calculateMovement(
       deltaTime,
@@ -111,5 +128,9 @@ export class Character {
     );
     const newPosition = physicsCharacterController.getPosition();
     mesh.position = newPosition;
+  };
+
+  handleJump = () => {
+    this.whatsToJump = true;
   };
 }
