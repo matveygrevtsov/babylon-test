@@ -2,8 +2,6 @@ import {
   ArcRotateCamera,
   CharacterSupportedState,
   CharacterSurfaceInfo,
-  KeyboardEventTypes,
-  KeyboardInfo,
   Mesh,
   MeshBuilder,
   PhysicsCharacterController,
@@ -14,11 +12,10 @@ import {
   CAPSULE_HEIGHT,
   CAPSULE_RADIUS,
   CHARACTER_GRAVITY,
-  KEYBOARD_KEYS,
   SPEED,
   START_POSITION,
 } from "./constants";
-import { TKeyboardKeys } from "./types";
+import { MovementDirectionController } from "./MovementDirectionController/MovementDirectionController";
 
 interface IProps {
   scene: Scene;
@@ -29,17 +26,18 @@ export class Character {
   private readonly scene: Scene;
   private readonly camera: ArcRotateCamera;
   private readonly mesh: Mesh;
+  private readonly movementDirectionController: MovementDirectionController;
   private readonly physicsCharacterController: PhysicsCharacterController;
-  private readonly pressedKeyBoardKeys: Set<TKeyboardKeys>;
-  private readonly movementDirectionVector: Vector3;
 
   constructor({ scene, camera }: IProps) {
     this.scene = scene;
     this.camera = camera;
     this.mesh = this.createMesh();
+    this.movementDirectionController = new MovementDirectionController({
+      scene,
+      camera,
+    });
     this.physicsCharacterController = this.createPhysicsCharacterController();
-    this.pressedKeyBoardKeys = new Set<TKeyboardKeys>();
-    this.movementDirectionVector = Vector3.Zero();
     this.addListeners();
   }
 
@@ -48,7 +46,7 @@ export class Character {
     const capsule = MeshBuilder.CreateCapsule(
       "CharacterDisplay",
       { height: CAPSULE_HEIGHT, radius: CAPSULE_RADIUS },
-      scene,
+      scene
     );
     camera.setTarget(capsule);
     return capsule;
@@ -59,73 +57,23 @@ export class Character {
     const physicsCharacterController = new PhysicsCharacterController(
       START_POSITION,
       { capsuleHeight: CAPSULE_HEIGHT, capsuleRadius: CAPSULE_RADIUS },
-      scene,
+      scene
     );
     return physicsCharacterController;
   }
 
   private addListeners() {
-    const { scene, handleKeyboard, handleBeforeRender, handleAfterPhysics } =
-      this;
-    scene.onKeyboardObservable.add(handleKeyboard);
-    scene.onBeforeRenderObservable.add(handleBeforeRender);
+    const { scene, handleAfterPhysics } = this;
     scene.onAfterPhysicsObservable.add(handleAfterPhysics);
   }
 
-  private refreshMovementDirectionVector() {
-    const { camera, pressedKeyBoardKeys } = this;
-
-    this.movementDirectionVector.copyFrom(Vector3.Zero());
-
-    const cameraDirection = camera.getForwardRay().direction;
-    cameraDirection.y = 0;
-
-    // Движение на север.
-    if (pressedKeyBoardKeys.has("KeyW") && !pressedKeyBoardKeys.has("KeyS")) {
-      this.movementDirectionVector.addInPlace(cameraDirection);
-    }
-
-    // Движение на юг.
-    if (pressedKeyBoardKeys.has("KeyS") && !pressedKeyBoardKeys.has("KeyW")) {
-      this.movementDirectionVector.addInPlace(cameraDirection.scale(-1));
-    }
-
-    // Движение на восток.
-    if (pressedKeyBoardKeys.has("KeyD") && !pressedKeyBoardKeys.has("KeyA")) {
-      this.movementDirectionVector.addInPlace(
-        new Vector3(cameraDirection.z, 0, -cameraDirection.x),
-      );
-    }
-
-    // Движение на запад.
-    if (pressedKeyBoardKeys.has("KeyA") && !pressedKeyBoardKeys.has("KeyD")) {
-      this.movementDirectionVector.addInPlace(
-        new Vector3(-cameraDirection.z, 0, cameraDirection.x),
-      );
-    }
-
-    this.movementDirectionVector.normalize();
-  }
-
-  // private refreshRotation() {
-  //   const { movementDirectionVector, mesh } = this;
-  //   if (!movementDirectionVector?.length() || !mesh) return;
-  //   mesh.lookAt(mesh.position.subtract(movementDirectionVector));
-  // }
-
-  // private refreshPosition() {
-  //   const { mesh, movementDirectionVector, scene, camera } = this;
-  //   if (!mesh || !movementDirectionVector || !camera) return;
-  //   const delta = ((scene.deltaTime ?? 0) / 1000) * 4;
-  //   mesh.moveWithCollisions(movementDirectionVector.scale(delta));
-  //   this.refreshCameraTargetPosition();
-  // }
-
   private getVelocity(
     deltaTime: number,
-    characterSurfaceInfo: CharacterSurfaceInfo,
+    characterSurfaceInfo: CharacterSurfaceInfo
   ) {
-    const { movementDirectionVector, physicsCharacterController } = this;
+    const { movementDirectionController, physicsCharacterController } = this;
+    const movementDirectionVector =
+      movementDirectionController.getMovementDirectionVector();
     const currentVelocity = physicsCharacterController.getVelocity();
     const velocity = movementDirectionVector.scale(SPEED);
     const result = physicsCharacterController.calculateMovement(
@@ -135,33 +83,11 @@ export class Character {
       currentVelocity,
       Vector3.ZeroReadOnly,
       velocity,
-      new Vector3(0, 1, 0),
+      new Vector3(0, 1, 0)
     );
     return result;
     // return movementDirectionVector.scale(SPEED);
   }
-
-  handleKeyboard = (keyboardInfo: KeyboardInfo) => {
-    const key = keyboardInfo.event.code as TKeyboardKeys;
-    if (!KEYBOARD_KEYS[key]) return;
-
-    const { pressedKeyBoardKeys } = this;
-    if (keyboardInfo.type === KeyboardEventTypes.KEYDOWN) {
-      pressedKeyBoardKeys.add(key);
-      if (key === "Space") {
-        this.physicsCharacterController.setVelocity(new Vector3(0, 4, 0));
-        console.log(1);
-      }
-    } else {
-      pressedKeyBoardKeys.delete(key);
-    }
-  };
-
-  handleBeforeRender = () => {
-    this.refreshMovementDirectionVector();
-    // this.refreshRotation();
-    // this.refreshPosition();
-  };
 
   handleAfterPhysics = () => {
     const { scene, physicsCharacterController, mesh } = this;
@@ -172,16 +98,16 @@ export class Character {
     const down = new Vector3(0, -1, 0);
     const characterSurfaceInfo = physicsCharacterController.checkSupport(
       deltaTime,
-      down,
+      down
     );
 
     physicsCharacterController.setVelocity(
-      this.getVelocity(deltaTime, characterSurfaceInfo),
+      this.getVelocity(deltaTime, characterSurfaceInfo)
     );
     physicsCharacterController.integrate(
       deltaTime,
       characterSurfaceInfo,
-      CHARACTER_GRAVITY,
+      CHARACTER_GRAVITY
     );
     const newPosition = physicsCharacterController.getPosition();
     mesh.position = newPosition;

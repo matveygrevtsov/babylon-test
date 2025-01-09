@@ -8,10 +8,10 @@ import {
   SceneLoader,
   Vector3,
 } from "@babylonjs/core";
-import { TGetObjectValues } from "../../../types";
-import { ANIMAIONS, KEYBOARD_KEYS } from "./constants";
+import { TGetObjectValues, TKeyboardKeys } from "../../../types";
+import { ANIMAIONS } from "./constants";
 import { KeyboardEventTypes } from "babylonjs";
-import { TKeyboardKeys } from "./types";
+import { KEYBOARD_KEYS } from "../../../constants";
 
 interface IProps {
   scene: Scene;
@@ -42,7 +42,7 @@ export class Character {
       null,
       "assets/",
       "Adventurer.gltf",
-      this.scene,
+      this.scene
     ).then(({ meshes, animationGroups }) => {
       this.mesh = meshes[0];
       this.mesh.checkCollisions = true;
@@ -116,14 +116,14 @@ export class Character {
     // Движение на восток.
     if (pressedKeyBoardKeys.has("KeyD") && !pressedKeyBoardKeys.has("KeyA")) {
       this.movementDirectionVector.addInPlace(
-        new Vector3(cameraDirection.z, 0, -cameraDirection.x),
+        new Vector3(cameraDirection.z, 0, -cameraDirection.x)
       );
     }
 
     // Движение на запад.
     if (pressedKeyBoardKeys.has("KeyA") && !pressedKeyBoardKeys.has("KeyD")) {
       this.movementDirectionVector.addInPlace(
-        new Vector3(-cameraDirection.z, 0, cameraDirection.x),
+        new Vector3(-cameraDirection.z, 0, cameraDirection.x)
       );
     }
 
