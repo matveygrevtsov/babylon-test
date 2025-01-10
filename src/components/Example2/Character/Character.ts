@@ -86,13 +86,8 @@ export class Character {
     const isGrounded =
       characterSurfaceInfo.supportedState == CharacterSupportedState.SUPPORTED;
 
-    console.log(this.whatsToJump);
-
-    if (this.whatsToJump) {
-      this.whatsToJump = false;
-    }
-
     const velocity = movementDirectionVector.scale(SPEED);
+
     const result = physicsCharacterController.calculateMovement(
       deltaTime,
       movementDirectionVector,
@@ -102,8 +97,20 @@ export class Character {
       velocity,
       new Vector3(0, 1, 0)
     );
+
+    if (isGrounded && this.whatsToJump) {
+      this.whatsToJump = false;
+      result.y = 40;
+    }
+
+    if (
+      !isGrounded ||
+      (isGrounded && !this.whatsToJump && currentVelocity.y > 0)
+    ) {
+      result.y = currentVelocity.y - 1;
+    }
+
     return result;
-    // return movementDirectionVector.scale(SPEED);
   }
 
   handleAfterPhysics = () => {
