@@ -8,10 +8,10 @@ import {
   SceneLoader,
   Vector3,
 } from "@babylonjs/core";
-import { TGetObjectValues } from "../../../types";
-import { ANIMAIONS, KEYBOARD_KEYS } from "./constants";
+import { TGetObjectValues, TKeyboardKeys } from "../../../types";
+import { ANIMAIONS } from "./constants";
 import { KeyboardEventTypes } from "babylonjs";
-import { TKeyboardKeys } from "./types";
+import { KEYBOARD_KEYS } from "../../../constants";
 
 interface IProps {
   scene: Scene;

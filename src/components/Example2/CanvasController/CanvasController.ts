@@ -15,6 +15,7 @@ import {
   PhysicsBody,
 } from "@babylonjs/core";
 import HavokPhysics from "@babylonjs/havok";
+import { Character } from "../Character/Character";
 
 interface IProps {
   canvas: HTMLCanvasElement;
@@ -105,7 +106,7 @@ export class CanvasController {
   private fillScene() {
     this.initGround();
     this.initBox();
-    this.initCapsule();
+    this.initCharacter();
   }
 
   private initGround() {
@@ -122,37 +123,20 @@ export class CanvasController {
     const { scene } = this;
     const size = 2;
     const box = MeshBuilder.CreateBox("box", { size }, scene);
-    box.position.x = size / 2;
+    box.position.x = 0;
     box.position.y = size / 2;
-    box.position.z = size / 2;
+    box.position.z = 0;
     new PhysicsAggregate(
       box,
       PhysicsShapeType.BOX,
-      { mass: 1, restitution: 0.75 },
+      { mass: 20, restitution: 0.75 },
       scene,
     );
   }
 
-  private initCapsule() {
-    const capsule = MeshBuilder.CreateCapsule(
-      "capsule",
-      {
-        height: 3, // Высота капсулы
-        radius: 0.5, // Радиус капсулы
-        tessellation: 16, // Количество сегментов для сглаживания
-      },
-      this.scene,
-    );
-    capsule.position.y = 5;
-    const physicsAggregate = new PhysicsAggregate(
-      capsule,
-      PhysicsShapeType.CAPSULE,
-      { mass: 1, restitution: 0.75 },
-      this.scene,
-    );
-    this.scene.onBeforeRenderObservable.add(() => {
-      physicsAggregate.body.setAngularVelocity(Vector3.Zero());
-    });
+  private initCharacter() {
+    const { scene, camera } = this;
+    new Character({ scene, camera });
   }
 
   render = () => {

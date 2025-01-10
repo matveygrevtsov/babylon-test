@@ -24,10 +24,3 @@ export const ANIMAIONS = {
   Walk: "Walk",
   Wave: "Wave",
 } as const;
-
-export const KEYBOARD_KEYS = {
-  KeyW: "KeyW",
-  KeyA: "KeyA",
-  KeyS: "KeyS",
-  KeyD: "KeyD",
-} as const;
