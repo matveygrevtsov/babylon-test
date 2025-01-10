@@ -13,8 +13,6 @@ import {
   Vector3,
   PhysicsViewer,
   PhysicsBody,
-  PhysicsCharacterController,
-  Quaternion,
 } from "@babylonjs/core";
 import HavokPhysics from "@babylonjs/havok";
 import { Character } from "../Character/Character";
@@ -131,7 +129,7 @@ export class CanvasController {
     new PhysicsAggregate(
       box,
       PhysicsShapeType.BOX,
-      { mass: 1, restitution: 0.75 },
+      { mass: 20, restitution: 0.75 },
       scene,
     );
   }

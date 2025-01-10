@@ -36,14 +36,8 @@ export class Character {
     this.scene = scene;
     this.camera = camera;
     this.mesh = this.createMesh();
-    this.keyboardController = new KeyboardController({
-      scene,
-      handlers: { Space: this.handleJump },
-    });
-    this.movementDirectionController = new MovementDirectionController({
-      scene,
-      camera,
-    });
+    this.keyboardController = this.createKeyboardController();
+    this.movementDirectionController = this.createMovementDirectionController();
     this.physicsCharacterController = this.createPhysicsCharacterController();
     this.whatsToJump = false;
     this.addListeners();
@@ -54,10 +48,28 @@ export class Character {
     const capsule = MeshBuilder.CreateCapsule(
       "CharacterDisplay",
       { height: CAPSULE_HEIGHT, radius: CAPSULE_RADIUS },
-      scene
+      scene,
     );
     camera.setTarget(capsule);
     return capsule;
+  }
+
+  private createKeyboardController() {
+    const { scene, handleJump } = this;
+    const keyboardController = new KeyboardController({
+      scene,
+      handlers: { Space: handleJump },
+    });
+    return keyboardController;
+  }
+
+  private createMovementDirectionController() {
+    const { scene, camera } = this;
+    const movementDirectionController = new MovementDirectionController({
+      scene,
+      camera,
+    });
+    return movementDirectionController;
   }
 
   private createPhysicsCharacterController() {
@@ -65,7 +77,7 @@ export class Character {
     const physicsCharacterController = new PhysicsCharacterController(
       START_POSITION,
       { capsuleHeight: CAPSULE_HEIGHT, capsuleRadius: CAPSULE_RADIUS },
-      scene
+      scene,
     );
     return physicsCharacterController;
   }
@@ -75,9 +87,9 @@ export class Character {
     scene.onAfterPhysicsObservable.add(handleAfterPhysics);
   }
 
-  private getVelocity(
+  private getVelocityAffectedByCollisions(
     deltaTime: number,
-    characterSurfaceInfo: CharacterSurfaceInfo
+    characterSurfaceInfo: CharacterSurfaceInfo,
   ) {
     const { movementDirectionController, physicsCharacterController } = this;
     const movementDirectionVector =
@@ -95,7 +107,7 @@ export class Character {
       currentVelocity,
       Vector3.ZeroReadOnly,
       velocity,
-      new Vector3(0, 1, 0)
+      new Vector3(0, 1, 0),
     );
 
     if (isGrounded && this.whatsToJump) {
@@ -120,16 +132,16 @@ export class Character {
     const down = new Vector3(0, -1, 0);
     const characterSurfaceInfo = physicsCharacterController.checkSupport(
       deltaTime,
-      down
+      down,
     );
 
     physicsCharacterController.setVelocity(
-      this.getVelocity(deltaTime, characterSurfaceInfo)
+      this.getVelocityAffectedByCollisions(deltaTime, characterSurfaceInfo),
     );
     physicsCharacterController.integrate(
       deltaTime,
       characterSurfaceInfo,
-      CHARACTER_GRAVITY
+      CHARACTER_GRAVITY,
     );
     const newPosition = physicsCharacterController.getPosition();
     mesh.position = newPosition;

@@ -37,14 +37,14 @@ export class MovementDirectionController {
     // Движение на восток.
     if (pressedKeyBoardKeys.has("KeyD") && !pressedKeyBoardKeys.has("KeyA")) {
       movementDirectionVector.addInPlace(
-        new Vector3(cameraDirection.z, 0, -cameraDirection.x)
+        new Vector3(cameraDirection.z, 0, -cameraDirection.x),
       );
     }
 
     // Движение на запад.
     if (pressedKeyBoardKeys.has("KeyA") && !pressedKeyBoardKeys.has("KeyD")) {
       movementDirectionVector.addInPlace(
-        new Vector3(-cameraDirection.z, 0, cameraDirection.x)
+        new Vector3(-cameraDirection.z, 0, cameraDirection.x),
       );
     }
 
