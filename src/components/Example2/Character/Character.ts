@@ -101,12 +101,10 @@ export class Character {
     if (isGrounded && this.whatsToJump) {
       this.whatsToJump = false;
       result.y = 40;
+      return result;
     }
 
-    if (
-      !isGrounded ||
-      (isGrounded && !this.whatsToJump && currentVelocity.y > 0)
-    ) {
+    if (!isGrounded || (isGrounded && Math.abs(currentVelocity.y) > 0.001)) {
       result.y = currentVelocity.y - 1;
     }
 
