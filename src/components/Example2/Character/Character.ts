@@ -12,6 +12,7 @@ import {
   CAPSULE_HEIGHT,
   CAPSULE_RADIUS,
   CHARACTER_GRAVITY,
+  GRAVITATIONAL_ACCELERATION,
   SPEED,
   START_POSITION,
 } from "./constants";
@@ -48,7 +49,7 @@ export class Character {
     const capsule = MeshBuilder.CreateCapsule(
       "CharacterDisplay",
       { height: CAPSULE_HEIGHT, radius: CAPSULE_RADIUS },
-      scene,
+      scene
     );
     camera.setTarget(capsule);
     return capsule;
@@ -77,7 +78,7 @@ export class Character {
     const physicsCharacterController = new PhysicsCharacterController(
       START_POSITION,
       { capsuleHeight: CAPSULE_HEIGHT, capsuleRadius: CAPSULE_RADIUS },
-      scene,
+      scene
     );
     return physicsCharacterController;
   }
@@ -89,7 +90,7 @@ export class Character {
 
   private getVelocityAffectedByCollisions(
     deltaTime: number,
-    characterSurfaceInfo: CharacterSurfaceInfo,
+    characterSurfaceInfo: CharacterSurfaceInfo
   ) {
     const { movementDirectionController, physicsCharacterController } = this;
     const movementDirectionVector =
@@ -107,17 +108,18 @@ export class Character {
       currentVelocity,
       Vector3.ZeroReadOnly,
       velocity,
-      new Vector3(0, 1, 0),
+      new Vector3(0, 1, 0)
     );
 
     if (isGrounded && this.whatsToJump) {
       this.whatsToJump = false;
-      result.y = 40;
+      result.y = 13;
       return result;
     }
 
     if (!isGrounded || (isGrounded && Math.abs(currentVelocity.y) > 0.001)) {
-      result.y = currentVelocity.y - 1;
+      result.y = currentVelocity.y - 2 * deltaTime * GRAVITATIONAL_ACCELERATION;
+      return result;
     }
 
     return result;
@@ -132,16 +134,16 @@ export class Character {
     const down = new Vector3(0, -1, 0);
     const characterSurfaceInfo = physicsCharacterController.checkSupport(
       deltaTime,
-      down,
+      down
     );
 
     physicsCharacterController.setVelocity(
-      this.getVelocityAffectedByCollisions(deltaTime, characterSurfaceInfo),
+      this.getVelocityAffectedByCollisions(deltaTime, characterSurfaceInfo)
     );
     physicsCharacterController.integrate(
       deltaTime,
       characterSurfaceInfo,
-      CHARACTER_GRAVITY,
+      CHARACTER_GRAVITY
     );
     const newPosition = physicsCharacterController.getPosition();
     mesh.position = newPosition;

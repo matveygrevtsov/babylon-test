@@ -16,6 +16,7 @@ import {
 } from "@babylonjs/core";
 import HavokPhysics from "@babylonjs/havok";
 import { Character } from "../Character/Character";
+import { GRAVITATIONAL_ACCELERATION } from "../Character/constants";
 
 interface IProps {
   canvas: HTMLCanvasElement;
@@ -73,7 +74,7 @@ export class CanvasController {
       Math.PI / 4,
       15,
       Vector3.Zero(),
-      scene,
+      scene
     );
     camera.attachControl(canvas, true);
     return camera;
@@ -89,7 +90,7 @@ export class CanvasController {
     const { scene } = this;
     const havokInstance = await HavokPhysics();
     const hk = new HavokPlugin(true, havokInstance);
-    scene.enablePhysics(new Vector3(0, -9.8, 0), hk);
+    scene.enablePhysics(new Vector3(0, -GRAVITATIONAL_ACCELERATION, 0), hk);
   }
 
   private showPhysics() {
@@ -114,9 +115,14 @@ export class CanvasController {
     const ground = MeshBuilder.CreateGround(
       "ground",
       { width: 10, height: 10 },
-      scene,
+      scene
     );
-    new PhysicsAggregate(ground, PhysicsShapeType.BOX, { mass: 0 }, scene);
+    new PhysicsAggregate(
+      ground,
+      PhysicsShapeType.BOX,
+      { mass: 0, restitution: 0 },
+      scene
+    );
   }
 
   private initBox() {
@@ -129,8 +135,8 @@ export class CanvasController {
     new PhysicsAggregate(
       box,
       PhysicsShapeType.BOX,
-      { mass: 20, restitution: 0.75 },
-      scene,
+      { mass: 20, restitution: 0 },
+      scene
     );
   }
 
